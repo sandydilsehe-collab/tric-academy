@@ -1,3 +1,34 @@
+// ============================================================================
+// Global CSRF Token Fetch Interceptor
+// Automatically attaches X-CSRFToken header to all state-changing requests
+// ============================================================================
+(function() {
+  if (typeof window !== 'undefined' && window.fetch) {
+    const origFetch = window.fetch;
+    window.fetch = function(url, init = {}) {
+      const method = (init.method || 'GET').toUpperCase();
+      if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (token) {
+          init.headers = init.headers || {};
+          if (init.headers instanceof Headers) {
+            if (!init.headers.has('X-CSRFToken')) init.headers.set('X-CSRFToken', token);
+          } else if (Array.isArray(init.headers)) {
+            if (!init.headers.some(([k]) => k.toLowerCase() === 'x-csrftoken')) {
+              init.headers.push(['X-CSRFToken', token]);
+            }
+          } else {
+            if (!init.headers['X-CSRFToken'] && !init.headers['x-csrftoken']) {
+              init.headers['X-CSRFToken'] = token;
+            }
+          }
+        }
+      }
+      return origFetch.call(this, url, init);
+    };
+  }
+})();
+
 // TRIC Academy - Client Interactions & Form Logic
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -756,11 +787,14 @@ function initAdminQuickApprove() {
       btn.innerHTML = '⏳ Approving...';
       btn.style.opacity = '0.7';
 
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                        form.querySelector('input[name="csrf_token"]')?.value || '';
       fetch(form.action, {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'X-CSRFToken': csrfToken
         }
       })
       .then(res => res.json())

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}TRIC Academy – School of Swimming{% endblock %}</title>
   <meta name="description" content="TRIC Academy School of Swimming - Professional swimming training, batch timings, entry pass application, and competition tracking in Tirupur, Tamil Nadu.">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">

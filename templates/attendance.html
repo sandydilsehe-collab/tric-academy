@@ -58,6 +58,7 @@
 
   <!-- Attendance Roster Form -->
   <form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="batch_id" value="{{ selected_batch_id }}">
     <input type="hidden" name="date" value="{{ selected_date }}">
 

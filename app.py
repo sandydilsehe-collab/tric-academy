@@ -46,6 +46,7 @@ os.makedirs(CERTS_FOLDER, exist_ok=True)
 os.makedirs(BACKUP_FOLDER, exist_ok=True)
 
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 # Enable ProxyFix so Flask recognizes scheme, host, and client IP from reverse proxies/tunnels
@@ -54,10 +55,14 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tric-academy-secret-key-2026')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_NAME'] = 'tric_session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_TIME_LIMIT'] = 86400  # 24 hours
+
+csrf = CSRFProtect(app)
 
 # -----------------------------------------------------------------------------
 # Database Helpers
@@ -123,23 +128,41 @@ def get_current_user():
 
 @app.after_request
 def configure_response_headers(response):
-    # Ensure all Set-Cookie headers contain SameSite=None; Secure; Partitioned for cross-site iframe support
+    # Enforce SameSite=Lax and Secure=True on all Set-Cookie headers
     cookies = response.headers.getlist('Set-Cookie')
     if cookies:
         response.headers.remove('Set-Cookie')
         for c in cookies:
             cookie_str = c
             if 'SameSite=' not in cookie_str:
-                cookie_str += '; SameSite=None'
-            elif 'SameSite=Lax' in cookie_str or 'SameSite=Strict' in cookie_str:
-                cookie_str = re.sub(r'SameSite=(Lax|Strict)', 'SameSite=None', cookie_str)
+                cookie_str += '; SameSite=Lax'
+            elif 'SameSite=None' in cookie_str or 'SameSite=Strict' in cookie_str:
+                cookie_str = re.sub(r'SameSite=(None|Strict)', 'SameSite=Lax', cookie_str)
             if 'Secure' not in cookie_str:
                 cookie_str += '; Secure'
-            if 'Partitioned' not in cookie_str:
-                cookie_str += '; Partitioned'
+            if 'HttpOnly' not in cookie_str and 'tric_session' in cookie_str:
+                cookie_str += '; HttpOnly'
             response.headers.add('Set-Cookie', cookie_str)
-    # Ensure iframe embedding in AI Studio preview works
-    response.headers['X-Frame-Options'] = 'ALLOWALL'
+
+    # Security Headers (CSP, HSTS, X-Frame-Options: DENY, nosniff, Referrer-Policy)
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+    csp_directives = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        "img-src 'self' data: blob: https:",
+        "frame-src 'self' https://www.google.com",
+        "frame-ancestors 'none'",
+        "connect-src 'self'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ]
+    response.headers['Content-Security-Policy'] = "; ".join(csp_directives)
     return response
 
 @app.context_processor
@@ -1550,6 +1573,7 @@ def api_upi_simulate_paid():
     return jsonify(result)
 
 @app.route('/api/upi/webhook', methods=['POST'])
+@csrf.exempt
 def api_upi_webhook():
     """Webhook for instant server-to-server notification from payment gateway / UPI PSP."""
     data = request.get_json(silent=True) or request.form

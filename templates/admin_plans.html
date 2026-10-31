@@ -23,6 +23,7 @@
 <div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
   <div class="card" style="padding: 1.75rem 2rem;">
       <form action="{{ url_for('admin_plans') }}" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="plan_id" value="{{ p.id }}">
 
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">

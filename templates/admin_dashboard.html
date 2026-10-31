@@ -21,6 +21,7 @@
           Pending Passes (<span id="heroPendingCount">{{ pending_users }}</span>)
         </a>
         <form action="{{ url_for('admin_run_reminders_now') }}" method="POST" style="display: inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;" title="Trigger expiry reminder job immediately">
             🔔 Run Reminders Now
           </button>
@@ -108,6 +109,7 @@
               <td style="text-align: right; white-space: nowrap;">
                 <div style="display: inline-flex; gap: 0.45rem; align-items: center; justify-content: flex-end;">
                   <form action="{{ url_for('admin_quick_approve', user_id=a.id) }}" method="POST" class="quick-approve-form" data-user-id="{{ a.id }}" style="display: inline; margin: 0;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn btn-primary btn-sm approve-pass-btn" id="approve-btn-{{ a.id }}" style="background-color: var(--success); font-weight: 700;">
                       ✓ Approve &amp; Issue Pass
                     </button>

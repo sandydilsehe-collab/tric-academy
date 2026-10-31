@@ -118,6 +118,7 @@
                   Edit
                 </a>
                 <form action="{{ url_for('admin_toggle_user_status', user_id=u.id) }}" method="POST" style="display: inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                   <button type="submit" class="btn btn-secondary btn-sm" title="Toggle Active/Deactivated">
                     {% if u.status == 'approved' %}Deactivate{% else %}Activate{% endif %}
                   </button>

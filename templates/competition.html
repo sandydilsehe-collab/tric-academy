@@ -283,6 +283,7 @@
     </div>
 
     <form action="{{ url_for('add_race_record') }}" method="POST" style="padding: 1.5rem;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <input type="hidden" name="swimmer_id" value="{{ swimmer.id }}">
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">

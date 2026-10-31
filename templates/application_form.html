@@ -130,6 +130,7 @@
 
     <!-- Master Form -->
     <form id="applicationForm" method="POST" enctype="multipart/form-data" data-is-public="{{ 'true' if not is_admin_mode and not is_view_mode else 'false' }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       
       <!-- Hidden phone verification flag for Mock OTP -->
       <input type="hidden" id="phoneVerifiedFlag" name="phone_verified" value="{{ 1 if (applicant and applicant.phone_verified) or is_admin_mode else 0 }}">

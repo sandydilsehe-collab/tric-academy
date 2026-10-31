@@ -344,10 +344,12 @@ async function initiateUPIIntentFlow() {
   payBtn.innerHTML = '<span>⏳ Initiating UPI Session...</span>';
 
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const res = await fetch('/api/upi/create-order?uid={{ user.id }}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
       },
       body: JSON.stringify({
         plan_id: currentPlanId,
@@ -437,9 +439,13 @@ async function simulateUPIPINSuccess() {
   btn.textContent = '⏳ Authorizing PIN & executing webhook...';
 
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const res = await fetch('/api/upi/simulate-paid?uid={{ user.id }}', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
       body: JSON.stringify({
         order_id: activeOrderId,
         upi_app: 'Google Pay',
