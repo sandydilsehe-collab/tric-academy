@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     photo_filename TEXT,
     health_declared INTEGER DEFAULT 0,
     rules_agreed INTEGER DEFAULT 0,
+    dpdp_consent INTEGER DEFAULT 0,
     signature_name TEXT,
     place TEXT,
     application_date DATE DEFAULT (DATE('now')),

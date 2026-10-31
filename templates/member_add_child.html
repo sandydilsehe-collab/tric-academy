@@ -179,12 +179,37 @@
         </div>
       </div>
 
-      <!-- Undertaking -->
-      <div style="margin-top: 1.5rem; padding: 1rem; background-color: #F8FAFC; border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); margin-bottom: 2rem;">
-        <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
-          <input type="checkbox" required checked style="width: 18px; height: 18px; margin-top: 2px;">
+      <!-- DPDP Act 2023 Statutory Parental Consent Disclosure & Safety Undertaking -->
+      <div class="dpdp-consent-box" style="margin-top: 1.5rem; margin-bottom: 2rem; padding: 1.15rem 1.35rem; background: #F0FDF4; border: 1.5px solid #16A34A; border-radius: var(--radius-sm);">
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;">
+          <span style="font-size: 1.35rem;">🛡️</span>
+          <div>
+            <strong style="color: #14532D; font-size: 0.95rem; display: block;" data-i18n="app_dpdp_title">
+              Digital Personal Data Protection (DPDP) Act, 2023 — Section 9 Parental Consent
+            </strong>
+            <span style="font-size: 0.725rem; color: #166534; font-weight: 600;">
+              Statutory Verifiable Parental / Lawful Guardian Consent for Minors under 18 Years
+            </span>
+          </div>
+        </div>
+
+        <p style="font-size: 0.8rem; color: #166534; line-height: 1.5; margin-bottom: 0.75rem;" data-i18n="app_dpdp_desc">
+          Pursuant to Section 9(1) of the Digital Personal Data Protection Act, 2023 (DPDP Act), TRIC Academy collects and processes minor's personal data (name, age, DOB, photograph, and medical notes) solely for legitimate swimming instruction, batch allocation, pool safety management, and academy pass issuance. In accordance with Section 9(3), TRIC Academy strictly prohibits tracking, profiling, or behavioral monitoring of children.
+        </p>
+
+        <div style="background: rgba(255, 255, 255, 0.85); border: 1px solid #BBF7D0; border-radius: 4px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
+          <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; font-size: 0.825rem; color: #14532D; font-weight: 700; line-height: 1.45;">
+            <input type="checkbox" id="dpdpConsentCheckChild" name="dpdp_consent" value="1" required checked style="width: 18px; height: 18px; margin-top: 2px;">
+            <span data-i18n="app_dpdp_checkbox_label">
+              As parent/lawful guardian ({{ parent.name }}), I confirm my legal authority and grant explicit, verifiable consent under the DPDP Act 2023 for TRIC Academy to process my child's personal and medical data solely for swimming coaching, pool safety, and identity pass issuance.
+            </span>
+          </label>
+        </div>
+
+        <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; font-size: 0.8rem; color: #166534; font-weight: 600;">
+          <input type="checkbox" required checked style="width: 16px; height: 16px; margin-top: 2px;">
           <span>
-            As parent/guardian, I confirm that my child is medically fit for swimming training, and I agree that our family will abide by all <strong>32 General Rules &amp; Regulations</strong> of TRIC Academy – School of Swimming.
+            I further confirm that my child is medically fit for swimming training, and our family agrees to abide by all <strong>32 General Rules &amp; Regulations</strong> of TRIC Academy.
           </span>
         </label>
       </div>

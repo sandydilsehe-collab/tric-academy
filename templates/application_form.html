@@ -261,6 +261,39 @@
                        placeholder="Parent Occupation" {% if is_view_mode %}readonly{% endif %}>
               </div>
             </div>
+
+            <!-- DPDP Act 2023 Statutory Parental Consent Disclosure for Minors -->
+            <div id="dpdpParentalConsentBox" class="dpdp-consent-box"
+                 style="display: {% if applicant and applicant.age and applicant.age < 18 %}block{% else %}none{% endif %}; margin: 0.5rem 0 0.25rem; padding: 1rem 1.25rem; background: #F0FDF4; border: 1.5px solid #16A34A; border-radius: var(--radius-sm);">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem;">
+                <span style="font-size: 1.25rem;">🛡️</span>
+                <div>
+                  <strong style="color: #14532D; font-size: 0.9rem; display: block;" data-i18n="app_dpdp_title">
+                    Digital Personal Data Protection (DPDP) Act, 2023 — Section 9 Parental Consent
+                  </strong>
+                  <span style="font-size: 0.725rem; color: #166534; font-weight: 600;">
+                    Statutory Verifiable Parental / Lawful Guardian Consent for Minors under 18 Years
+                  </span>
+                </div>
+              </div>
+
+              <p style="font-size: 0.775rem; color: #166534; line-height: 1.5; margin-bottom: 0.75rem;" data-i18n="app_dpdp_desc">
+                Pursuant to Section 9(1) of the Digital Personal Data Protection Act, 2023 (DPDP Act), TRIC Academy collects and processes minor applicant data (name, date of birth, identity card photograph, and medical/fitness declarations) solely for legitimate swimming coaching, safety oversight, batch allocation, and pass issuance. In compliance with Section 9(3), TRIC Academy does not track, profile, or conduct behavioral monitoring of children or serve targeted advertisements.
+              </p>
+
+              <div style="background: rgba(255, 255, 255, 0.85); border: 1px solid #BBF7D0; border-radius: 4px; padding: 0.65rem 0.75rem;">
+                <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; font-size: 0.8rem; color: #14532D; font-weight: 700; line-height: 1.45;">
+                  <input type="checkbox" id="dpdpConsentCheck" name="dpdp_consent" value="1"
+                         {% if applicant and applicant.dpdp_consent %}checked{% endif %}
+                         {% if applicant and applicant.age and applicant.age < 18 and not is_view_mode %}required{% endif %}
+                         {% if is_view_mode %}disabled{% endif %}
+                         style="width: 18px; height: 18px; margin-top: 2px;">
+                  <span data-i18n="app_dpdp_checkbox_label">
+                    As parent/lawful guardian of the minor applicant, I confirm my legal authority and grant explicit, verifiable consent under the DPDP Act 2023 for TRIC Academy to process my child's personal and health data solely for swimming instruction, pool safety, and identity pass issuance.
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
 
           <!-- Row 7: Swimming Experience -->
@@ -580,7 +613,7 @@
 </div><!-- /.paper-sheet-wrapper -->
 
 <!-- Mock Phone OTP Verification Modal (Shown before public form submission) -->
-<div id="otpModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+<div id="otpModal" class="no-print" role="dialog" aria-modal="true" aria-label="Mock OTP Verification" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
   <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 460px; width: 100%; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center;">
     <div style="width: 52px; height: 52px; background-color: #E0F2FE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--brand-accent); font-size: 1.6rem;">
       📱
@@ -619,7 +652,7 @@
 </div>
 
 <!-- Mandatory 32 Rules Reader Modal -->
-<div id="rulesModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1001; align-items: center; justify-content: center; padding: 1.25rem;">
+<div id="rulesModal" class="no-print" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1001; align-items: center; justify-content: center; padding: 1.25rem;">
   <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 720px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden;">
     
     <!-- Modal Header -->
@@ -697,15 +730,21 @@
 {% block extra_scripts %}
 <script>
 window._applicationFormScriptLoaded = true;
-// Rules Modal Functions
+// Rules Modal Functions (Accessible with WCAG Focus Trapping)
 function openRulesModal() {
   const modal = document.getElementById('rulesModal');
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';
+    if (window.ModalFocusTrap) window.ModalFocusTrap.trap(modal, closeRulesModal);
+  }
 }
 
 function closeRulesModal() {
   const modal = document.getElementById('rulesModal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    if (window.ModalFocusTrap) window.ModalFocusTrap.release(modal);
+  }
 }
 
 function confirmRulesFromModal() {

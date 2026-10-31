@@ -29,6 +29,117 @@
   }
 })();
 
+// ============================================================================
+// Accessible Modal Focus Trap Utility (WCAG 2.1 Criteria 2.1.2 & 2.4.3)
+// Eliminates keyboard traps, manages Tab/Shift+Tab loops & restores prior focus
+// ============================================================================
+window.ModalFocusTrap = (function() {
+  const activeTraps = [];
+
+  const focusableSelector = [
+    'a[href]',
+    'area[href]',
+    'input:not([disabled]):not([type="hidden"])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    'button:not([disabled])',
+    'iframe',
+    'object',
+    'embed',
+    '[contenteditable]',
+    '[tabindex]:not([tabindex^="-"])'
+  ].join(', ');
+
+  function trap(modalElement, onCloseCallback) {
+    if (!modalElement) return;
+
+    // Check if already trapped
+    if (activeTraps.some(t => t.modal === modalElement)) return;
+
+    const previousActive = document.activeElement;
+
+    modalElement.setAttribute('role', modalElement.getAttribute('role') || 'dialog');
+    modalElement.setAttribute('aria-modal', 'true');
+    modalElement.setAttribute('aria-hidden', 'false');
+
+    function getFocusables() {
+      return Array.from(modalElement.querySelectorAll(focusableSelector)).filter(el => {
+        return (el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0) &&
+               window.getComputedStyle(el).visibility !== 'hidden';
+      });
+    }
+
+    const focusables = getFocusables();
+    if (focusables.length > 0) {
+      const preferred = modalElement.querySelector('[autofocus], .lightbox-close, button.close, button') || focusables[0];
+      try { preferred.focus(); } catch (_) {}
+    } else {
+      modalElement.setAttribute('tabindex', '-1');
+      try { modalElement.focus(); } catch (_) {}
+    }
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof onCloseCallback === 'function') {
+          onCloseCallback();
+        } else {
+          release(modalElement);
+          modalElement.style.display = 'none';
+        }
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const current = getFocusables();
+        if (current.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const first = current[0];
+        const last = current[current.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first || !modalElement.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !modalElement.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown, true);
+
+    activeTraps.push({
+      modal: modalElement,
+      previousActive: previousActive,
+      listener: onKeyDown
+    });
+  }
+
+  function release(modalElement) {
+    if (!modalElement) return;
+    const idx = activeTraps.findIndex(t => t.modal === modalElement);
+    if (idx !== -1) {
+      const record = activeTraps.splice(idx, 1)[0];
+      document.removeEventListener('keydown', record.listener, true);
+      modalElement.setAttribute('aria-hidden', 'true');
+      if (record.previousActive && typeof record.previousActive.focus === 'function') {
+        try { record.previousActive.focus(); } catch (_) {}
+      }
+    }
+  }
+
+  return { trap, release };
+})();
+
 // TRIC Academy - Client Interactions & Form Logic
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -100,16 +211,22 @@ function initDateOfBirthAndAge() {
       if (ageDisplay) ageDisplay.textContent = age;
       if (ageInput) ageInput.value = age;
 
-      // Minor rules (< 18)
+      // Minor rules (< 18) and DPDP Act 2023 Parental Consent
       if (minorSection) {
+        const dpdpBox = document.getElementById('dpdpParentalConsentBox');
+        const dpdpCheck = document.getElementById('dpdpConsentCheck');
         if (age < 18) {
           minorSection.style.display = 'flex';
           if (guardianInput) guardianInput.required = true;
           if (occupationInput) occupationInput.required = true;
+          if (dpdpBox) dpdpBox.style.display = 'block';
+          if (dpdpCheck) dpdpCheck.required = true;
         } else {
           minorSection.style.display = 'none';
           if (guardianInput) guardianInput.required = false;
           if (occupationInput) occupationInput.required = false;
+          if (dpdpBox) dpdpBox.style.display = 'none';
+          if (dpdpCheck) dpdpCheck.required = false;
         }
       }
 
@@ -329,6 +446,17 @@ function initMockOtpModal() {
     if (healthDeclared && !healthDeclared.checked) {
       showValidationError('Please confirm the Health Declaration checkbox.', healthDeclared);
       return false;
+    }
+
+    // 9. DPDP Act 2023 Parental Consent (Mandatory for minors < 18)
+    const ageInput = document.getElementById('ageInput');
+    const applicantAge = ageInput ? parseInt(ageInput.value, 10) : 99;
+    if (applicantAge < 18) {
+      const dpdpCheck = document.getElementById('dpdpConsentCheck');
+      if (dpdpCheck && !dpdpCheck.checked) {
+        showValidationError('Statutory Requirement: Under Section 9 of the DPDP Act 2023, verifiable Parental Consent is mandatory for applicants under 18 years of age.', dpdpCheck);
+        return false;
+      }
     }
 
     // 10. Mandatory 32 Rules & Regulations confirmation
@@ -637,6 +765,7 @@ function initPhotoLightbox() {
     modal.setAttribute('aria-hidden', 'false');
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    if (window.ModalFocusTrap) window.ModalFocusTrap.trap(modal, closeLightbox);
   }
 
   function closeLightbox() {
@@ -647,6 +776,7 @@ function initPhotoLightbox() {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
+    if (window.ModalFocusTrap) window.ModalFocusTrap.release(modal);
   }
 
   function showNext() {

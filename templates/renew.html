@@ -181,7 +181,7 @@
 </div>
 
 <!-- UPI Intent Interactive Modal (App Chooser + Live QR + Real-Time Status Polling) -->
-<div id="upiIntentModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(6px); z-index: 1050; align-items: center; justify-content: center; padding: 1rem;">
+<div id="upiIntentModal" class="no-print" role="dialog" aria-modal="true" aria-labelledby="upiModalTitle" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(6px); z-index: 1050; align-items: center; justify-content: center; padding: 1rem;">
   <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 480px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); overflow: hidden; animation: fadeIn 0.2s ease;">
     
     <!-- Modal Header -->
@@ -378,9 +378,10 @@ async function initiateUPIIntentFlow() {
     document.getElementById('credIntentLink').href = data.intents.cred;
     document.getElementById('genericIntentLink').href = data.intents.generic;
 
-    // Open Modal
+    // Open Modal (with WCAG Focus Trapping)
     const modal = document.getElementById('upiIntentModal');
     modal.style.display = 'flex';
+    if (window.ModalFocusTrap) window.ModalFocusTrap.trap(modal, closeUPIModal);
 
     // Start instant polling loop
     startPolling(activeOrderId);
@@ -408,7 +409,11 @@ function trackAppLaunch(appName) {
 
 function closeUPIModal() {
   if (pollTimer) clearInterval(pollTimer);
-  document.getElementById('upiIntentModal').style.display = 'none';
+  const modal = document.getElementById('upiIntentModal');
+  if (modal) {
+    modal.style.display = 'none';
+    if (window.ModalFocusTrap) window.ModalFocusTrap.release(modal);
+  }
 }
 
 // 2. Instant Polling Script: checks order status every 1.5 seconds

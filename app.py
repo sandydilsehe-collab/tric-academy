@@ -789,6 +789,7 @@ def apply_pass():
         sponsored = 1 if request.form.get('sponsored') == 'yes' else 0
         health_declared = 1 if request.form.get('health_declared') else 0
         rules_agreed = 1 if request.form.get('rules_agreed') else 0
+        dpdp_consent = 1 if request.form.get('dpdp_consent') else 0
         signature_name = request.form.get('signature_name', '').strip()
         place = request.form.get('place', 'Tirupur').strip()
         password = request.form.get('password', '').strip()
@@ -823,9 +824,13 @@ def apply_pass():
 
 # Age already calculated above
 
-        if age is not None and age < 18 and (not guardian_name or not guardian_occupation):
-            flash('Parent/Guardian details are mandatory for applicants under 18 years of age.', 'error')
-            return redirect(url_for('apply_pass'))
+        if age is not None and age < 18:
+            if not guardian_name or not guardian_occupation:
+                flash('Parent/Guardian details are mandatory for applicants under 18 years of age.', 'error')
+                return redirect(url_for('apply_pass'))
+            if not dpdp_consent:
+                flash('Statutory Requirement: Verifiable Parental Consent under Section 9 of the DPDP Act 2023 is mandatory for minor applicants.', 'error')
+                return redirect(url_for('apply_pass'))
 
         if not health_declared:
             flash('You must agree to the health declaration.', 'error')
@@ -868,15 +873,15 @@ def apply_pass():
                 app_no, role, status, name, email, phone, password_hash,
                 dob, age, address, pincode, guardian_name, guardian_occupation,
                 experience, pass_type_requested, sponsored, sponsor_cert_filename,
-                photo_filename, health_declared, rules_agreed, rules_confirmed_at, signature_name,
+                photo_filename, health_declared, rules_agreed, rules_confirmed_at, dpdp_consent, signature_name,
                 place, application_date, email_verified, email_token, phone_verified, mock_otp, parent_id
-            ) VALUES (?, 'member', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, ?, ?, 0, ?, ?, ?, ?)
+            ) VALUES (?, 'member', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, ?, ?, ?, 0, ?, ?, ?, ?)
             """,
             (
                 app_no, name, email, phone, pwd_hash,
                 dob, age, address, pincode, guardian_name, guardian_occupation,
                 experience, pass_type, sponsored, sponsor_cert_filename,
-                photo_filename, health_declared, signature_name,
+                photo_filename, health_declared, dpdp_consent, signature_name,
                 place, date.today(), email_token, phone_verified, mock_otp, parent_id
             )
         )
@@ -1355,9 +1360,9 @@ def member_add_child():
                 app_no, role, status, name, email, phone, password_hash,
                 dob, age, address, pincode, guardian_name, guardian_occupation,
                 experience, pass_type_requested, photo_filename, health_declared,
-                rules_agreed, rules_confirmed_at, signature_name, place,
+                rules_agreed, rules_confirmed_at, dpdp_consent, signature_name, place,
                 application_date, email_verified, phone_verified, parent_id
-            ) VALUES (?, 'member', 'approved', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, CURRENT_TIMESTAMP, ?, ?, ?, 1, 1, ?)
+            ) VALUES (?, 'member', 'approved', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, CURRENT_TIMESTAMP, 1, ?, ?, ?, 1, 1, ?)
             """,
             (
                 child_app_no, name.upper(), parent['email'], parent['phone'], parent['password_hash'],
