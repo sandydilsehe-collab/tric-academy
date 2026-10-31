@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Coaching Staff Tools</span>
+      <h1 style="font-size: 1.85rem;">Daily Batch Attendance</h1>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      {% if current_user.role == 'admin' %}
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+        ← Admin Hub
+      </a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+        🚪 Log Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Bar: Batch & Date Selection -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.25rem 1.5rem;">
+    <form method="GET" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 220px;">
+        <label class="form-label" for="batchSelect">Select Training Batch</label>
+        <select id="batchSelect" name="batch_id" class="form-control" onchange="this.form.submit()">
+          {% for b in batches %}
+          <option value="{{ b.id }}" {% if b.id == selected_batch_id %}selected{% endif %}>
+            {{ b.name }} ({{ b.timing_desc }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="width: 200px;">
+        <label class="form-label" for="datePicker">Session Date</label>
+        <input type="date" id="datePicker" name="date" class="form-control" value="{{ selected_date }}" onchange="this.form.submit()">
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-secondary">
+          Load Roster
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Attendance Roster Form -->
+  <form method="POST">
+    <input type="hidden" name="batch_id" value="{{ selected_batch_id }}">
+    <input type="hidden" name="date" value="{{ selected_date }}">
+
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Batch Swimmers Roster ({{ roster|length }})</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('present')">
+            Mark All Present
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('absent')">
+            Mark All Absent
+          </button>
+        </div>
+      </div>
+
+      {% if roster %}
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID Card No</th>
+              <th>Swimmer Name</th>
+              <th>Contact Phone</th>
+              <th style="text-align: right;">Attendance Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in roster %}
+            <tr>
+              <td class="font-mono">{{ r.id_card_number or 'PENDING' }}</td>
+              <td style="font-weight: 700;">{{ r.name }}</td>
+              <td class="font-mono" style="font-size: 0.85rem;">{{ r.phone }}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 1rem; align-items: center;">
+                  <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--success); font-weight: 600;">
+                    <input type="radio" name="status_{{ r.id }}" value="present" class="status-radio-present"
+                           {% if r.attendance_status == 'present' or not r.attendance_status %}checked{% endif %}>
+                    Present
+                  </label>
+                  <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--danger); font-weight: 600;">
+                    <input type="radio" name="status_{{ r.id }}" value="absent" class="status-radio-absent"
+                           {% if r.attendance_status == 'absent' %}checked{% endif %}>
+                    Absent
+                  </label>
+                  <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--brand-accent); font-weight: 600;">
+                    <input type="radio" name="status_{{ r.id }}" value="excused" class="status-radio-excused"
+                           {% if r.attendance_status == 'excused' %}checked{% endif %}>
+                    Excused
+                  </label>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          Save Attendance Record
+        </button>
+      </div>
+
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 3rem 0;">
+        No active members assigned to this batch yet. Assign members from the Admin Hub.
+      </p>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function markAll(status) {
+  const radios = document.querySelectorAll('.status-radio-' + status);
+  radios.forEach(r => r.checked = true);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Rules &amp; Policies Confirmation – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 860px; padding-top: 3rem; padding-bottom: 5rem;">
+  
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #FEF3C7; border: 1px solid #FDE68A; color: #92400E; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">
+      ⚠️ Mandatory Academy Policy Requirement
+    </div>
+    <h1 style="font-size: 2rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+      Read &amp; Confirm Rules &amp; Regulations
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Hello <strong>{{ user.name }}</strong>, before your login access is activated, you must review and confirm your acceptance of all 32 official pool rules.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 2rem; border-top: 4px solid var(--brand-primary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.15rem; color: var(--brand-primary); text-transform: uppercase;">32 Official Pool Rules &amp; Regulations</h3>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Scroll to review all 32 rules</span>
+    </div>
+
+    <!-- Scrollable 32 Rules Container -->
+    <div id="rulesScrollBox" style="max-height: 380px; overflow-y: auto; padding-right: 1rem; margin-bottom: 1.75rem; border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 1.25rem; background-color: #FAFAFA;">
+      <ol style="list-style-position: outside; margin-left: 1.5rem; font-size: 0.875rem; line-height: 1.8; color: #1F2937;">
+        <li style="margin-bottom: 0.65rem;">All the pass holders should possess proper identity card issued from the TRIC ACADEMY office on production of two passport size photographs and on payment of Rs.50/-. Membership card will be brought every day and will be shown on demand from Authorised officer. Entry to the pool will be made with only IDENTITY CARD.</li>
+        <li style="margin-bottom: 0.65rem;">Swimmers may use the pool at their own risk. TRIC and its officials will not be responsible for any theft, accident, injury, covid 19 and loss of life occurring in the swimming and premises. TRIC ACADEMY AND Officials will not be responsible for any injury/loss of life during the playing period and on compensation or claim will be entertained.</li>
+        <li style="margin-bottom: 0.65rem;">All instruction imposed by TRIC ACADEMY or its authorized representative will be strictly adhered to.</li>
+        <li style="margin-bottom: 0.65rem;">Those who do not know proper swimming should not use the main pool.</li>
+        <li style="margin-bottom: 0.65rem;">Swimmer should bring their own proper swimming dress/costumes in hand and wear it only after checking by the concerned officials/coaches.</li>
+        <li style="margin-bottom: 0.65rem;">Using white/transparent costumes is strictly prohibited.</li>
+        <li style="margin-bottom: 0.65rem;">Swimmers must wear swimming caps is mandatory.</li>
+        <li style="margin-bottom: 0.65rem;">Use of oil, soaps, etc., is strictly prohibited in pool. No one can enter the pool with oil applied on the body and head.</li>
+        <li style="margin-bottom: 0.65rem;">Spitting and passing of urine in the swimming pool is strictly prohibited.</li>
+        <li style="margin-bottom: 0.65rem;">Those who have contagious disease (or) heart disease (or) epilepsy and like diseases should not use the pool.</li>
+        <li style="margin-bottom: 0.65rem;">Intoxicated persons are not allowed to use the pool and consumption of alcohol or alcoholic product and smoking is strictly prohibited in the pool premises.</li>
+        <li style="margin-bottom: 0.65rem;">Eatables should not be brought inside the pool premises.</li>
+        <li style="margin-bottom: 0.65rem;">Jumping from the diving board is strictly prohibited during public session.</li>
+        <li style="margin-bottom: 0.65rem;">Swimmers those who practice diving should use the diving board only in the presence of approved coaches.</li>
+        <li style="margin-bottom: 0.65rem;">School children if not accompanied by guardian concerned teacher will not be allowed inside the pool.</li>
+        <li style="margin-bottom: 0.65rem;">Unnecessary jumping from the deck of the pool is strictly prohibited.</li>
+        <li style="margin-bottom: 0.65rem;">Use of foot wears in the pool deck area is prohibited.</li>
+        <li style="margin-bottom: 0.65rem;">Keep the pool and its surroundings clean and tidy.</li>
+        <li style="margin-bottom: 0.65rem;">Users of the pool shall abide all the rules of the pool and instructions of the staff on duty.</li>
+        <li style="margin-bottom: 0.65rem;">Who are availing concessional charges, especially student should produces their school's student identity card for verification.</li>
+        <li style="margin-bottom: 0.65rem;">Pets are not allowed inside the TRIC ACADEMY premises.</li>
+        <li style="margin-bottom: 0.65rem;">Any deliberate damage/loss caused to the academy property will be recovered from the member.</li>
+        <li style="margin-bottom: 0.65rem;">TRIC ACADEMY Authority reserves the right to suspend/cancel the membership of any individual without giving any prior notice/reason in the interest of efficient functioning of the arrangements.</li>
+        <li style="margin-bottom: 0.65rem;">The access to the family members is limited to areas mentioned in the card.</li>
+        <li style="margin-bottom: 0.65rem;">TRIC ACADEMY will not be responsible for any loss of any valuable/cash.</li>
+        <li style="margin-bottom: 0.65rem;">Fee should be paid the member before use of the pool.</li>
+        <li style="margin-bottom: 0.65rem;">No refund or adjustments of fee will be made in case the swimming pool &amp; other facilities are closed for maintenance or for any other unavoidable reasons.</li>
+        <li style="margin-bottom: 0.65rem;">Documents required for membership - Two passport size photographs, Residential proof or identity proof, Date of birth certificate, Medical Fitness certificate and also the applicant should not suffer from any contagious disease.</li>
+        <li style="margin-bottom: 0.65rem;">TRIC ACADEMY reserves the right to change the training time as and when required.</li>
+        <li style="margin-bottom: 0.65rem;">Any person violates these rules shall be sent out without any refund of fees.</li>
+        <li style="margin-bottom: 0.65rem;">Membership fee or coaching fee will not be transferred to others including family members.</li>
+        <li style="margin-bottom: 0.65rem;">The amount paid by the members or students should use their allocated dates, and the dates they do not used cannot be compensated on others days.</li>
+      </ol>
+    </div>
+
+    <!-- Mandatory Confirmation Form -->
+    <form method="POST">
+      <div style="background-color: #F1F5F9; border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.5rem; border: 1.5px solid #CBD5E1;">
+        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer;">
+          <input type="checkbox" id="rulesConfirmCheck" name="rules_agreed" value="1" required style="width: 20px; height: 20px; margin-top: 2px;">
+          <span style="font-size: 0.925rem; font-weight: 600; color: #0F172A; line-height: 1.5;">
+            I, <strong>{{ user.name }}</strong>, hereby confirm that I have read, understood, and agreed to abide strictly by all 32 General Rules &amp; Regulations of TRIC Academy – School of Swimming, #5 Velampalayam, Tirupur.
+          </span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">
+          Cancel &amp; Sign Out
+        </a>
+        <button type="submit" id="confirmRulesBtn" class="btn btn-primary btn-lg">
+          ✓ Confirm Agreement &amp; Activate Login
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

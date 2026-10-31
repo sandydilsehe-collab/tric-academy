@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Member Dashboard – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase; letter-spacing: 0.05em;">Member Portal</span>
+      <h1 style="font-size: 1.85rem;">Welcome, {{ user.name }}</h1>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <a href="{{ url_for('renew_membership', uid=user.id) }}" class="btn btn-primary btn-sm">
+        ⚡ Renew Membership
+      </a>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+        🚪 Log Out
+      </a>
+    </div>
+  </div>
+
+  {% if user.status == 'pending' %}
+  <div style="background-color: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: var(--radius-sm); padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-size: 1.5rem;">⏳</span>
+      <div>
+        <strong style="color: #92400E; font-size: 0.95rem; display: block;">Application Status: Pending Office Document Verification</strong>
+        <span style="font-size: 0.825rem; color: #78350F;">
+          Your pass application (App No: <strong class="font-mono">{{ user.app_no }}</strong>) has been registered. You have portal access to review rules, inspect batch timings, and check your digital pass.
+        </span>
+      </div>
+    </div>
+    <a href="{{ url_for('quick_approve_member', user_id=user.id, uid=user.id) }}" class="btn btn-primary btn-sm" style="background-color: #D97706; border-color: #B45309; font-weight: 700;">
+      ⚡ 1-Click Activate Pass (Test Mode)
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="dashboard-grid">
+    
+    <!-- Left Column: Official Digital Identity Card -->
+    <div class="dashboard-sidebar-col">
+      <div class="card" style="padding: 0; overflow: hidden; border: 2px solid var(--brand-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
+        <!-- Card Header Banner -->
+        <div style="background-color: var(--brand-primary); color: #FFFFFF; padding: 1rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" style="width: 38px; height: 38px; background: #fff; border-radius: 50%; padding: 2px;">
+            <div>
+              <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">TRIC ACADEMY</div>
+              <div style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; color: #E6FFFA;">MEMBER IDENTITY CARD</div>
+            </div>
+          </div>
+          <span style="font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">
+            {{ office.id_card_number if office and office.id_card_number else 'PENDING' }}
+          </span>
+        </div>
+
+        <!-- Card Body -->
+        <div style="padding: 1.5rem; background: #FFFFFF;">
+          <div style="display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.25rem;">
+            <div style="width: 90px; height: 110px; border: 1px solid #CBD5E1; border-radius: 4px; overflow: hidden; background: #F1F5F9; flex-shrink: 0;">
+              {% if user.photo_filename %}
+                <img src="{{ url_for('serve_upload', category='photos', filename=user.photo_filename) }}" alt="{{ user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #94A3B8;">👤</div>
+              {% endif %}
+            </div>
+            <div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); line-height: 1.2;">{{ user.name }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">App No: <span class="font-mono">{{ user.app_no }}</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Pass: <strong style="color: var(--brand-primary);">{{ (office.pass_type_issued if office else user.pass_type_requested)|replace('_', ' ')|title }}</strong></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Age: <strong>{{ user.age or '--' }} Yrs</strong></div>
+            </div>
+          </div>
+
+          <!-- Validity Strip -->
+          <div style="background-color: var(--surface-subtle); border-radius: var(--radius-sm); padding: 0.75rem 1rem; border: 1px solid var(--border-hairline);">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+              <span>Pass Validity</span>
+              {% if days_left is not none %}
+                {% if days_left > 7 %}
+                  <span style="color: var(--success);">Active ({{ days_left }} Days Left)</span>
+                {% elif days_left >= 0 %}
+                  <span style="color: var(--warning); font-weight: 800;">Expiring in {{ days_left }} Day{% if days_left != 1 %}s{% endif %}</span>
+                {% else %}
+                  <span style="color: var(--danger); font-weight: 800;">Expired</span>
+                {% endif %}
+              {% else %}
+                <span>Not Assigned</span>
+              {% endif %}
+            </div>
+            <div class="font-mono" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">
+              {{ user.start_date or 'N/A' }} &nbsp;—&nbsp; {{ user.end_date or 'N/A' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div style="background: #F8FAFC; padding: 0.75rem 1rem; border-top: 1px solid var(--border-hairline); font-size: 0.7rem; color: var(--text-muted); text-align: center;">
+          Velampalayam, Tirupur · www.tricacademy.com
+        </div>
+      </div>
+
+      <!-- Quick Action Card -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Batch Assignment</h4>
+        <div style="font-size: 1.1rem; font-weight: 700; color: var(--brand-primary);">
+          {{ user.batch_name or 'Unassigned' }}
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+          Bring your Identity Card every day. Costumes &amp; caps must be worn as per Rule 1 &amp; 7.
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Column: Schedule & Attendance -->
+    <div class="dashboard-main-col">
+      
+      <!-- Membership Expiry Alert if Expiring -->
+      {% if days_left is not none and days_left <= 7 and days_left >= 0 %}
+      <div class="alert alert-warning" style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-left: 5px solid #D97706;">
+        <div>
+          <div style="font-size: 1.05rem; font-weight: 800; color: #92400E; margin-bottom: 2px;">⚠️ Pass Expiring in {{ days_left }} Day{% if days_left != 1 %}s{% endif %} ({{ user.end_date }})</div>
+          <p style="font-size: 0.875rem; margin: 0; color: #78350F;">
+            Avoid slot cancellation. Renew instantly online via UPI Intent (Google Pay, PhonePe, Paytm, CRED) with zero downtime.
+          </p>
+        </div>
+        <a href="{{ url_for('renew_membership', uid=user.id) }}" class="btn btn-primary" style="background: var(--brand-primary); border-color: var(--brand-primary); font-weight: 700; white-space: nowrap;">
+          ⚡ Renew via UPI
+        </a>
+      </div>
+      {% elif days_left is not none and days_left < 0 %}
+      <div class="alert alert-danger" style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-left: 5px solid var(--danger);">
+        <div>
+          <div style="font-size: 1.05rem; font-weight: 800; color: #991B1B; margin-bottom: 2px;">🚫 Membership Pass Expired on {{ user.end_date }}</div>
+          <p style="font-size: 0.875rem; margin: 0; color: #7F1D1D;">
+            Your pool access has been locked. Renew your membership now via instant UPI to immediately reactivate your entry pass.
+          </p>
+        </div>
+        <a href="{{ url_for('renew_membership', uid=user.id) }}" class="btn btn-danger" style="font-weight: 700; white-space: nowrap;">
+          ⚡ Reactivate Pass (UPI)
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Notifications & Announcements -->
+      {% if user_notifications %}
+      <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--brand-primary);">
+        <div class="card-header">
+          <h3 class="card-title" style="font-size: 1rem;">📢 Academy Alerts &amp; Expiry Notices</h3>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">{{ user_notifications|length }} Messages</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for n in user_notifications[:3] %}
+          <div style="padding: 0.75rem 1rem; background: var(--surface-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-hairline);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="font-size: 0.85rem; color: var(--text-main);">{{ n.title }}</strong>
+              <span class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);">{{ n.created_at[:10] }}</span>
+            </div>
+            <p style="font-size: 0.825rem; color: var(--text-muted); margin: 0;">{{ n.message }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent Attendance Section -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title">Recent Attendance Record</h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Last 15 Sessions</span>
+        </div>
+
+        {% if attendance_records %}
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Batch</th>
+                <th>Status</th>
+                <th>Marked By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in attendance_records %}
+              <tr>
+                <td class="font-mono">{{ a.date }}</td>
+                <td>{{ a.batch_name }}</td>
+                <td>
+                  {% if a.status == 'present' %}
+                    <span class="status-badge status-active">✓ Present</span>
+                  {% elif a.status == 'excused' %}
+                    <span class="status-badge" style="color: var(--brand-accent);">Excused</span>
+                  {% else %}
+                    <span class="status-badge status-expired">✕ Absent</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.8rem; color: var(--text-muted);">{{ a.marked_by or 'Coach' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2rem 0;">
+          No attendance records recorded yet. Once your coach marks attendance at the deck, records will show here.
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Payment History Section -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Membership Payment &amp; Invoice History</h3>
+          <a href="{{ url_for('renew_membership', uid=user.id) }}" class="btn btn-secondary btn-sm">+ Make Payment</a>
+        </div>
+
+        {% if payments %}
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Gateway &amp; Method</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th style="text-align: right;">Receipt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payments %}
+              <tr>
+                <td>
+                  <div class="font-mono" style="font-size: 0.8rem; font-weight: 700;">{{ p.transaction_id }}</div>
+                  {% if p.order_id %}
+                    <div class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);">Order: {{ p.order_id }}</div>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.8rem;">
+                  <span style="font-weight: 700; color: var(--brand-primary);">UPI</span> · {{ p.payment_method }}
+                </td>
+                <td class="font-mono">{{ p.payment_date[:10] }}</td>
+                <td class="font-mono" style="font-weight: 700;">₹{{ '{:,.0f}'.format(p.amount) }}</td>
+                <td><span class="status-badge status-active">✓ Success</span></td>
+                <td style="text-align: right;">
+                  <a href="{{ url_for('payment_receipt', transaction_id=p.transaction_id, uid=user.id) }}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">
+                    🧾 View Receipt
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+          No online payment history found.
+        </p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

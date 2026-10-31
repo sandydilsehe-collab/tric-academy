@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TRIC Academy – School of Swimming{% endblock %}</title>
+  <meta name="description" content="TRIC Academy School of Swimming - Professional swimming training, batch timings, entry pass application, and competition tracking in Tirupur, Tamil Nadu.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/paper_form.css') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  <!-- Top Navigation Bar (Zone 1: Brand, Zone 2: Nav links, Zone 3: Actions) -->
+  <header class="top-navbar {% block nav_class %}{% endblock %}">
+    <div class="nav-container">
+      <!-- Zone 1: Brand Wordmark -->
+      <a href="{{ url_for('index') }}" class="brand-lockup">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" class="brand-logo-img">
+        <div>
+          <span class="brand-name">TRIC ACADEMY</span>
+          <span class="brand-sub">School of Swimming</span>
+        </div>
+      </a>
+
+      <!-- Zone 2: Single-line Navigation Links -->
+      <nav class="nav-links">
+        <a href="{{ url_for('index') }}#about" class="nav-link">About</a>
+        <a href="{{ url_for('index') }}#batches" class="nav-link">Batches</a>
+        <a href="{{ url_for('index') }}#fees" class="nav-link">Fees</a>
+        <a href="{{ url_for('index') }}#testimonials" class="nav-link">Testimonials</a>
+        <a href="{{ url_for('rules') }}" class="nav-link {% if request.path == '/rules' %}active{% endif %}">Rules & Regulations</a>
+        <a href="{{ url_for('index') }}#contact" class="nav-link">Contact</a>
+        {% if current_user %}
+          {% if current_user.role == 'member' %}
+            <a href="{{ url_for('member_dashboard') }}" class="nav-link {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}">🏊 My Dashboard</a>
+            <a href="{{ url_for('renew_membership') }}" class="nav-link {% if request.path == '/renew' %}active{% endif %}">⚡ Renew Pass</a>
+          {% endif %}
+          {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if '/admin' in request.path %}active{% endif %}">Admin Hub</a>
+          {% endif %}
+          {% if current_user.role in ('admin', 'coach') %}
+            <a href="{{ url_for('attendance_tool') }}" class="nav-link {% if request.path == '/attendance' %}active{% endif %}">Attendance</a>
+          {% endif %}
+          {% if current_user.role in ('admin', 'coach') or current_user.is_competition or current_user.pass_type_requested == 'competition' %}
+            <a href="{{ url_for('competition_hub') }}" class="nav-link {% if request.path == '/competition' %}active{% endif %}">Competition Hub</a>
+          {% endif %}
+        {% endif %}
+      </nav>
+
+      <!-- Zone 3: Primary Action / User Profile -->
+      <div class="nav-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+        {% if current_user %}
+          <!-- Notification Bell Dropdown -->
+          <div class="notif-dropdown-wrapper">
+            <button type="button" class="notif-btn" id="notifBellBtn" title="Notifications" onclick="document.getElementById('notifMenu').classList.toggle('open')">
+              🔔
+              {% if unread_notifications_count and unread_notifications_count > 0 %}
+                <span class="notif-badge">{{ unread_notifications_count }}</span>
+              {% endif %}
+            </button>
+            <div class="notif-menu" id="notifMenu">
+              <div class="notif-menu-header">
+                <span>Notifications ({{ unread_notifications_count or 0 }} new)</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">TRIC Alerts</span>
+              </div>
+              <ul class="notif-list">
+                {% if user_notifications %}
+                  {% for n in user_notifications %}
+                    <li class="notif-item {% if not n.is_read %}unread{% endif %}">
+                      <div class="notif-title">
+                        <span>{{ n.title }}</span>
+                        {% if not n.is_read %}
+                          <form action="{{ url_for('mark_notification_read', notif_id=n.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" style="background:none;border:none;color:var(--brand-primary);font-size:0.7rem;cursor:pointer;text-decoration:underline;">Mark Read</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                      <div class="notif-body">{{ n.message }}</div>
+                      <div class="notif-meta">
+                        <span>{{ n.created_at[:16] }}</span>
+                        {% if n.link_url %}
+                          <a href="{{ n.link_url }}" style="color:var(--brand-primary);font-weight:700;">Open →</a>
+                        {% endif %}
+                      </div>
+                    </li>
+                  {% endfor %}
+                {% else %}
+                  <li style="padding: 1.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+                    No notifications yet.
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+
+          <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            <span>{{ current_user.name.split()[0] }}</span>
+            <span class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">({{ current_user.role|capitalize }})</span>
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+            🚪 Log Out
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm">Login</a>
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm">Apply for Pass</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Notification Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;line-height:1;color:inherit;">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Content Block -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Quiet Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h4>TRIC Academy – School of Swimming</h4>
+        <p>Premier aquatic training facility dedicated to teaching swimming skills, water safety, and competitive excellence in Tirupur, Tamil Nadu.</p>
+        <div style="margin-top: 1rem; font-size: 0.85rem; color: #94A3B8;">
+          <p>85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur - 641 652, Tamil Nadu, India.</p>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('index') }}#about">About Academy</a></li>
+          <li><a href="{{ url_for('index') }}#batches">Batch Schedules</a></li>
+          <li><a href="{{ url_for('index') }}#fees">Membership Fees</a></li>
+          <li><a href="{{ url_for('index') }}#testimonials">Member Testimonials</a></li>
+          <li><a href="{{ url_for('rules') }}">Pool Rules & Safety</a></li>
+          {% if current_user %}
+            <li><a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}">My Dashboard</a></li>
+            <li><a href="{{ url_for('logout') }}" style="color: #F87171; font-weight: 600;">🚪 Log Out</a></li>
+          {% else %}
+            <li><a href="{{ url_for('apply_pass') }}">Apply for Entry Pass</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact Details</h5>
+        <ul class="footer-links" style="font-size: 0.825rem;">
+          <li>Email: <a href="mailto:goodwillshiva@gmail.com">goodwillshiva@gmail.com</a></li>
+          <li>Phone 1: <a href="tel:+919894777333">+91 98947 77333</a></li>
+          <li>Phone 2: <a href="tel:+919894730333">+91 98947 30333</a></li>
+          <li>Phone 3: <a href="tel:+919894757333">+91 98947 57333</a></li>
+          <li>Website: <a href="http://www.tricacademy.com" target="_blank">www.tricacademy.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; {{ now.year }} TRIC Academy. All rights reserved.</span>
+      <span>Official School of Swimming · Velampalayam, Tirupur</span>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Hub – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Academy Operations Hub</span>
+      <h1 style="font-size: 1.85rem;">Administration Dashboard</h1>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+      <a href="{{ url_for('admin_user_create') }}" class="btn btn-primary btn-sm">
+        + Create User (Entry Pass)
+      </a>
+      <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">
+        Pending Passes ({{ pending_users }})
+      </a>
+      <form action="{{ url_for('admin_run_reminders_now') }}" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-secondary btn-sm" title="Trigger expiry reminder job immediately">
+          🔔 Run Reminders Now
+        </button>
+      </form>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+        🚪 Log Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Stat Counters -->
+  <div class="stat-grid">
+    <div class="stat-box" style="border-left: 3px solid #64748B;">
+      <div class="stat-label">Total Members</div>
+      <div class="stat-value font-mono">{{ total_users }}</div>
+    </div>
+    <div class="stat-box" style="border-left: 3px solid var(--success);">
+      <div class="stat-label">Active Memberships</div>
+      <div class="stat-value font-mono" style="color: var(--success);">{{ active_users }}</div>
+    </div>
+    <div class="stat-box" style="border-left: 3px solid var(--warning);">
+      <div class="stat-label">Pending Approval</div>
+      <div class="stat-value font-mono" style="color: var(--warning);">{{ pending_users }}</div>
+    </div>
+    <div class="stat-box" style="border-left: 3px solid #D97706;">
+      <div class="stat-label">Expiring in 7 Days</div>
+      <div class="stat-value font-mono" style="color: #D97706;">{{ expiring_7d }}</div>
+    </div>
+    <div class="stat-box" style="border-left: 3px solid var(--danger);">
+      <div class="stat-label">Expired Passes</div>
+      <div class="stat-value font-mono" style="color: var(--danger);">{{ expired_users }}</div>
+    </div>
+  </div>
+
+  <!-- Admin Navigation Strip -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem; overflow-x: auto;">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle);">Overview</a>
+    <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
+    <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
+    <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
+    <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>
+    <a href="{{ url_for('admin_backups') }}" class="btn btn-secondary btn-sm">Backups</a>
+    <a href="{{ url_for('export_users_csv') }}" class="btn btn-secondary btn-sm" style="margin-left: auto;">Export Users CSV</a>
+    <a href="{{ url_for('export_payments_csv') }}" class="btn btn-secondary btn-sm">Export Payments CSV</a>
+  </div>
+
+  <div class="admin-dual-grid">
+    
+    <!-- Pending Applications Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Recent Pending Applications</h3>
+        <a href="{{ url_for('admin_applicants') }}" style="font-size: 0.825rem; color: var(--brand-primary);">View All ({{ pending_users }}) →</a>
+      </div>
+
+      {% if recent_applicants %}
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Applicant</th>
+              <th>Pass Requested</th>
+              <th>Date</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in recent_applicants %}
+            <tr>
+              <td>
+                <div style="font-weight: 700;">{{ a.name }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ a.phone }}</div>
+              </td>
+              <td>
+                <span class="status-badge {{ 'status-competition' if a.pass_type_requested == 'competition' else 'status-active' }}">
+                  {{ a.pass_type_requested|replace('_', ' ')|title }}
+                </span>
+              </td>
+              <td class="font-mono" style="font-size: 0.8rem;">{{ a.application_date }}</td>
+              <td style="text-align: right;">
+                <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-primary btn-sm">
+                  Review &amp; Endorse
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.9rem;">
+        No pending applications awaiting review.
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- Expiring Memberships in 7 Days -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Memberships Expiring Soon (Next 7 Days)</h3>
+        <span class="status-badge" style="color: #D97706;">{{ expiring_list|length }} Members</span>
+      </div>
+
+      {% if expiring_list %}
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Member Name</th>
+              <th>Expiry Date</th>
+              <th>Batch</th>
+              <th style="text-align: right;">Expiry Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in expiring_list %}
+            <tr>
+              <td>
+                <div style="font-weight: 700;">{{ m.name }}</div>
+                <div class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">{{ m.phone }}</div>
+              </td>
+              <td class="font-mono" style="color: var(--danger); font-weight: 700;">
+                {{ m.end_date }}
+              </td>
+              <td>{{ m.batch_name or 'General' }}</td>
+              <td style="text-align: right;">
+                <form action="{{ url_for('admin_send_member_reminder', user_id=m.id) }}" method="POST" style="display: inline;">
+                  <button type="submit" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 3px 8px; background: #D97706; border-color: #D97706;" title="Send instant in-app & email/SMS expiry reminder">
+                    📢 Send Alert
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.9rem;">
+        No active memberships expiring within the next 7 days.
+      </p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

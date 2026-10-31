@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding-top: 3rem; padding-bottom: 5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Attendance Records</span>
+      <h1 style="font-size: 1.75rem;">My Pool Attendance</h1>
+    </div>
+    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <div class="card">
+    {% if history %}
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Batch Name</th>
+            <th>Status</th>
+            <th>Marked By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in history %}
+          <tr>
+            <td class="font-mono">{{ h.date }}</td>
+            <td>{{ h.batch_name }}</td>
+            <td>
+              {% if h.status == 'present' %}
+                <span class="status-badge status-active">✓ Present</span>
+              {% elif h.status == 'excused' %}
+                <span class="status-badge" style="color: var(--brand-accent);">Excused</span>
+              {% else %}
+                <span class="status-badge status-expired">✕ Absent</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">{{ h.marked_by or 'Coach' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 2.5rem 0;">
+      No attendance recorded yet.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

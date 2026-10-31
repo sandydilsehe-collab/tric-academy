@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Login – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 520px; padding-top: 4rem; padding-bottom: 5rem;">
+  <div class="card" style="padding: 2.5rem 2rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" style="width: 56px; height: 56px; margin: 0 auto 0.75rem;">
+      <h1 style="font-size: 1.65rem; margin-bottom: 0.35rem;">Academy Portal Login</h1>
+      <p style="font-size: 0.875rem; color: var(--text-muted);">
+        Sign in using your registered Email ID or 10-digit Phone Number.
+      </p>
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+      <div class="form-group">
+        <label class="form-label" for="loginIdentifier">Email ID or Phone Number</label>
+        <input type="text" id="loginIdentifier" name="identifier" class="form-control"
+               placeholder="admin@tricacademy.com or 9894777333" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label class="form-label" for="loginPassword" style="margin-bottom: 0;">Password</label>
+          <a href="{{ url_for('forgot_password') }}" style="font-size: 0.8rem; color: var(--brand-primary); text-decoration: none;">Forgot password?</a>
+        </div>
+        <input type="password" id="loginPassword" name="password" class="form-control"
+               placeholder="Enter your password" required>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+          Sign In to Portal
+        </button>
+      </div>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+      New applicant? <a href="{{ url_for('apply_pass') }}" style="color: var(--brand-primary); font-weight: 600;">Apply for Entry Pass</a>
+    </div>
+
+    <!-- Quick Demo Credential Autofill (Convenience for Testing) -->
+    <div style="margin-top: 2rem; border-top: 1px solid var(--border-hairline); padding-top: 1.25rem;">
+      <span style="font-size: 0.75rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.85rem; text-align: center;">
+        ⚡ Instant 1-Click Demo Login (No Password Needed)
+      </span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+        <a href="{{ url_for('direct_login', identifier='priya.learner@gmail.com', next=request.args.get('next', '')) }}" class="btn btn-primary btn-sm" style="background-color: var(--brand-primary); font-weight: 700; text-decoration: none; padding: 0.65rem 0.5rem; text-align: center; border-radius: var(--radius-sm);">
+          🏊 Member (Priya)
+        </a>
+        <a href="{{ url_for('direct_login', identifier='admin@tricacademy.com', next=request.args.get('next', '')) }}" class="btn btn-secondary btn-sm" style="font-weight: 700; text-decoration: none; padding: 0.65rem 0.5rem; text-align: center; border-radius: var(--radius-sm); border-color: var(--brand-primary); color: var(--brand-primary);">
+          👤 Super Admin
+        </a>
+        <a href="{{ url_for('direct_login', identifier='coach@tricacademy.com', next=request.args.get('next', '')) }}" class="btn btn-secondary btn-sm" style="text-decoration: none; text-align: center; padding: 0.55rem 0.5rem;">
+          ⏱️ Coach Shiva
+        </a>
+        <a href="{{ url_for('direct_login', identifier='karthik.swim@gmail.com', next=request.args.get('next', '')) }}" class="btn btn-secondary btn-sm" style="text-decoration: none; text-align: center; padding: 0.55rem 0.5rem;">
+          🏆 Swimmer (Karthik)
+        </a>
+        <a href="{{ url_for('direct_login', identifier=21, next=request.args.get('next', '')) }}" class="btn btn-secondary btn-sm" style="grid-column: span 2; text-decoration: none; text-align: center; font-size: 0.8rem;">
+          👤 Santhosh (sandy.dilsehe@gmail.com)
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function fillCreds(ident, pwd, autoSubmit) {
+  document.getElementById('loginIdentifier').value = ident;
+  document.getElementById('loginPassword').value = pwd;
+  if (autoSubmit) {
+    document.querySelector('form').submit();
+  }
+}
+</script>
+{% endblock %}

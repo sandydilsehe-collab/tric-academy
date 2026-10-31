@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Applicants – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Office Verification Queue</span>
+      <h1 style="font-size: 1.85rem;">Pending Entry Pass Applications ({{ applicants|length }})</h1>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+      ← Back to Admin Hub
+    </a>
+  </div>
+
+  <div class="card">
+    {% if applicants %}
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Application No</th>
+            <th>Applicant Name</th>
+            <th>Age</th>
+            <th>Contact &amp; Email</th>
+            <th>Pass Requested</th>
+            <th>Sponsored</th>
+            <th>Applied On</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in applicants %}
+          <tr>
+            <td>
+              <div style="width: 44px; height: 52px; border: 1px solid var(--border-hairline); border-radius: 4px; overflow: hidden; background: #F1F5F9;">
+                {% if a.photo_filename %}
+                  <img src="{{ url_for('serve_upload', category='photos', filename=a.photo_filename) }}" alt="{{ a.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                  <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94A3B8; font-size: 1.25rem;">📷</div>
+                {% endif %}
+              </div>
+            </td>
+            <td class="font-mono" style="font-size: 0.85rem; font-weight: 700;">{{ a.app_no }}</td>
+            <td>
+              <div style="font-weight: 700;">{{ a.name }}</div>
+              {% if a.age and a.age < 18 %}
+                <span style="font-size: 0.725rem; color: var(--brand-accent);">Minor (Parent: {{ a.guardian_name or 'N/A' }})</span>
+              {% elif a.age and a.age > 50 %}
+                <span style="font-size: 0.725rem; color: var(--danger);">Senior &gt;50 (Fitness Cert Req.)</span>
+              {% endif %}
+            </td>
+            <td>{{ a.age or '--' }} Yrs</td>
+            <td>
+              <div class="font-mono" style="font-size: 0.85rem;">{{ a.phone }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">{{ a.email }}</div>
+            </td>
+            <td>
+              <span class="status-badge {{ 'status-competition' if a.pass_type_requested == 'competition' else 'status-active' }}">
+                {{ a.pass_type_requested|replace('_', ' ')|title }}
+              </span>
+            </td>
+            <td>
+              {% if a.sponsored %}
+                <span style="color: var(--brand-primary); font-weight: 700; font-size: 0.8rem;">Yes</span>
+                {% if a.sponsor_cert_filename %}
+                  <a href="{{ url_for('serve_upload', category='certs', filename=a.sponsor_cert_filename) }}" target="_blank" style="font-size: 0.75rem; display: block; text-decoration: underline;">[View Cert]</a>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">No</span>
+              {% endif %}
+            </td>
+            <td class="font-mono" style="font-size: 0.8rem;">{{ a.application_date }}</td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-primary btn-sm">
+                Review &amp; Endorse →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0;">
+      No pending applications. All applicants have been reviewed and approved!
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

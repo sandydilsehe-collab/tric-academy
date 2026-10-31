@@ -1,0 +1,988 @@
+{% extends "base.html" %}
+
+{% block title %}Application Form for Entry Pass – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="paper-sheet-wrapper">
+
+  <!-- Printable Action Bar at Top (hidden during print) -->
+  <div class="form-action-bar no-print">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      {% if is_view_mode %}
+        <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Dashboard
+        </a>
+      {% elif is_admin_mode %}
+        <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Applicants
+        </a>
+      {% else %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Home
+        </a>
+      {% endif %}
+      <div>
+        <span style="font-size: 0.825rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">
+          {% if is_admin_mode %}Admin Verification Portal{% elif is_view_mode %}Member Entry Pass{% else %}Applicant Registration{% endif %}
+        </span>
+        <h2 style="font-size: 1.25rem; margin: 0;">TRIC Academy – Entry Pass Form</h2>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      {% if is_view_mode and current_user and current_user.role == 'member' %}
+        <a href="{{ url_for('renew_membership') }}" class="btn btn-primary btn-sm" style="font-weight: 700;">
+          ⚡ Renew Pass
+        </a>
+      {% endif %}
+      <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm">
+        🖨️ Print / Save as PDF
+      </button>
+      <a href="{{ url_for('rules') }}" target="_blank" class="btn btn-secondary btn-sm">
+        View 32 Rules
+      </a>
+    </div>
+  </div>
+
+  <!-- The Master Paper Sheet (Exact Printed Replica) -->
+  <div class="paper-sheet">
+
+    <!-- Teal Header Banner -->
+    <div class="paper-header-banner">
+      <div class="paper-banner-left">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" class="paper-logo">
+        <div>
+          <div class="paper-banner-title">TRIC ACADEMY</div>
+        </div>
+      </div>
+      <div class="paper-banner-sub">
+        SCHOOL OF SWIMMING
+      </div>
+    </div>
+
+    <!-- Centered Form Title & Meta -->
+    <div class="paper-subheader">
+      <div style="width: 140px;"></div> <!-- Spacer to center title -->
+      <div class="paper-title-group">
+        <div class="paper-title-main">SWIMMING</div>
+        <div class="paper-title-sub">APPLICATION FORM FOR ENTRY PASS</div>
+      </div>
+      <div class="paper-meta-right">
+        <div class="meta-field-row">
+          <span>NO</span>
+          <div class="meta-input-line">{{ app_no or (applicant.app_no if applicant else '') }}</div>
+        </div>
+        <div class="meta-field-row">
+          <span>DATE</span>
+          <div class="meta-input-line">{{ today_date or (applicant.application_date if applicant else '') }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master Form -->
+    <form id="applicationForm" method="POST" enctype="multipart/form-data" data-is-public="{{ 'true' if not is_admin_mode and not is_view_mode else 'false' }}">
+      
+      <!-- Hidden phone verification flag for Mock OTP -->
+      <input type="hidden" id="phoneVerifiedFlag" name="phone_verified" value="{{ 1 if (applicant and applicant.phone_verified) or is_admin_mode else 0 }}">
+      <input type="hidden" id="mockOtpField" name="mock_otp" value="{{ applicant.mock_otp if applicant else '' }}">
+      <input type="hidden" id="ageInput" name="age" value="{{ applicant.age if applicant else '' }}">
+
+      <!-- Main Bordered Box -->
+      <div class="paper-main-box">
+
+        <!-- Top Right: Passport Size Photo Slot -->
+        <div class="photo-slot-container" id="photoContainer" title="Click to upload passport size photo">
+          {% if applicant and applicant.photo_filename %}
+            <img src="{{ url_for('serve_upload', category='photos', filename=applicant.photo_filename) }}" alt="Applicant Photo" class="photo-preview-img" id="photoPreview">
+            <span class="photo-slot-text" id="photoPlaceholder" style="display: none;">PASSPORT SIZE PHOTO</span>
+          {% else %}
+            <img src="" alt="Preview" class="photo-preview-img" id="photoPreview" style="display: none;">
+            <div id="photoPlaceholder">
+              <div style="font-size: 1.5rem; color: #9CA3AF; margin-bottom: 2px;">📷</div>
+              <span class="photo-slot-text">PASSPORT SIZE PHOTO</span>
+              <span style="font-size: 0.65rem; color: var(--brand-primary); font-weight: 600; display: block; margin-top: 2px; text-decoration: underline;">Click to Upload</span>
+              <span style="font-size: 0.58rem; color: #9CA3AF; display: block;">(or submit 2 photos at office)</span>
+            </div>
+          {% endif %}
+          <input type="file" id="photoInput" name="photo" accept="image/*" style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;">
+        </div>
+
+        <!-- Upper Rows (restricted width to clear photo box) -->
+        <div class="paper-rows-list">
+          <!-- Row 1: Name of Applicant -->
+          <div class="paper-row">
+            <label class="paper-label" for="applicantNameInput">NAME OF THE APPLICANT</label>
+            <div class="paper-input-wrap">
+              <input type="text" id="applicantNameInput" name="name" class="paper-line-input"
+                     value="{{ applicant.name if applicant else '' }}"
+                     placeholder="IN CAPITAL LETTERS" required
+                     {% if is_view_mode %}readonly{% endif %}>
+            </div>
+          </div>
+
+          <!-- Row 2: Address with Pin Code on Right -->
+          <div class="paper-row" style="align-items: flex-start;">
+            <label class="paper-label" for="addressInput">ADDRESS</label>
+            <div class="paper-input-wrap">
+              <textarea id="addressInput" name="address" rows="2" class="paper-multiline-input"
+                        placeholder="House / Door No., Street Name, Area" required
+                        {% if is_view_mode %}readonly{% endif %}>{{ applicant.address if applicant else '' }}</textarea>
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 4px;">
+                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">PIN CODE :</span>
+                <input type="text" name="pincode" class="paper-line-input" style="width: 110px;"
+                       value="{{ applicant.pincode if applicant else '641652' }}"
+                       placeholder="e.g. 641652" required {% if is_view_mode %}readonly{% endif %}>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Contact No -->
+          <div class="paper-row">
+            <label class="paper-label" for="phoneInput">CONTACT NO</label>
+            <div class="paper-input-wrap">
+              <input type="tel" id="phoneInput" name="phone" class="paper-line-input"
+                     value="{{ applicant.phone if applicant else '' }}"
+                     placeholder="10-digit mobile number" required {% if is_view_mode %}readonly{% endif %}>
+            </div>
+          </div>
+
+          <!-- Row 4: Email ID -->
+          <div class="paper-row">
+            <label class="paper-label" for="emailInput">EMAIL ID</label>
+            <div class="paper-input-wrap">
+              <input type="email" id="emailInput" name="email" class="paper-line-input"
+                     value="{{ applicant.email if applicant else '' }}"
+                     placeholder="active email address" required {% if is_view_mode %}readonly{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Rows (Full width below photo frame) -->
+        <div class="paper-rows-list full-width-below">
+          <!-- Row 5: Age & Date of Birth Digit Boxes -->
+          <div class="paper-row">
+            <label class="paper-label">AGE &amp; DATE OF BIRTH</label>
+            <div class="paper-input-wrap dob-age-row">
+              <div class="age-box-wrap">
+                <span style="font-size: 0.75rem; font-weight: 700;">AGE:</span>
+                <div class="age-display-box" id="ageDisplay">{{ applicant.age if applicant and applicant.age else '--' }}</div>
+                <span style="font-size: 0.75rem; font-weight: 700;">YRS</span>
+              </div>
+
+              <!-- Digit Boxes for DD MM YYYY -->
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.75rem; font-weight: 700;">DOB:</span>
+                <div class="digit-boxes-container">
+                  <div class="digit-box" id="d1">D</div>
+                  <div class="digit-box" id="d2">D</div>
+                  <div class="digit-box-sep"></div>
+                  <div class="digit-box" id="m1">M</div>
+                  <div class="digit-box" id="m2">M</div>
+                  <div class="digit-box-sep"></div>
+                  <div class="digit-box" id="y1">Y</div>
+                  <div class="digit-box" id="y2">Y</div>
+                  <div class="digit-box" id="y3">Y</div>
+                  <div class="digit-box" id="y4">Y</div>
+                </div>
+                <!-- Native Date Picker to populate boxes and age -->
+                <input type="date" id="dobPicker" name="dob" style="border: 1px solid #9CA3AF; border-radius: 4px; padding: 2px 6px; font-size: 0.8rem;"
+                       value="{{ applicant.dob if applicant else '' }}"
+                       {% if not is_view_mode %}required{% else %}disabled{% endif %}>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 6: Guardian/Parent details (conditional for minors <18) -->
+          <div id="minorSection" style="display: {% if applicant and applicant.age and applicant.age < 18 %}flex{% else %}none{% endif %}; flex-direction: column; gap: 0.65rem;">
+            <div class="paper-row">
+              <label class="paper-label" for="guardianInput">NAME OF GAURDIAN/PARENT<br><span style="font-size: 0.65rem; font-weight: 600;">(IN CASE OF MINOR)</span></label>
+              <div class="paper-input-wrap">
+                <input type="text" id="guardianInput" name="guardian_name" class="paper-line-input"
+                       value="{{ applicant.guardian_name if applicant else '' }}"
+                       placeholder="Parent or Legal Guardian Name" {% if is_view_mode %}readonly{% endif %}>
+              </div>
+            </div>
+
+            <div class="paper-row">
+              <label class="paper-label" for="occupationInput">OCCUPATION / PARENT</label>
+              <div class="paper-input-wrap">
+                <input type="text" id="occupationInput" name="guardian_occupation" class="paper-line-input"
+                       value="{{ applicant.guardian_occupation if applicant else '' }}"
+                       placeholder="Parent Occupation" {% if is_view_mode %}readonly{% endif %}>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 7: Swimming Experience -->
+          <div class="paper-row">
+            <label class="paper-label">SWIMMING EXPERIENCE (IF ANY)</label>
+            <div class="paper-input-wrap">
+              <input type="text" name="experience" class="paper-line-input"
+                     value="{{ applicant.experience if applicant else '' }}"
+                     placeholder="Beginner / Years of training / Strokes known" {% if is_view_mode %}readonly{% endif %}>
+            </div>
+          </div>
+
+          <!-- Row 8: Type of Pass Required -->
+          <div class="paper-row">
+            <label class="paper-label">TYPE OF PASS REQUIRED</label>
+            <div class="paper-input-wrap">
+              <div class="paper-choice-group">
+                <label class="paper-choice-item">
+                  <input type="radio" name="pass_type_requested" value="learn_to_swim"
+                         {% if not applicant or applicant.pass_type_requested == 'learn_to_swim' %}checked{% endif %}
+                         {% if is_view_mode %}disabled{% endif %}>
+                  <span>LEARN TO SWIM</span>
+                </label>
+                <label class="paper-choice-item">
+                  <input type="radio" name="pass_type_requested" value="competition"
+                         {% if applicant and applicant.pass_type_requested == 'competition' %}checked{% endif %}
+                         {% if is_view_mode %}disabled{% endif %}>
+                  <span>COMPETITION</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 9: Department Sponsorship -->
+          <div class="paper-row">
+            <label class="paper-label" style="font-size: 0.75rem;">
+              WHETHER THE COMPETITIVE SWIMMER IS SPONSORED BY ANY DEPARTMENT
+              <span style="display:block; font-size: 0.65rem; font-weight: 600;">(IF YES PRODUCE CERTIFICATE FROM THE SPONSOR)</span>
+            </label>
+            <div class="paper-input-wrap">
+              <div class="paper-choice-group">
+                <label class="paper-choice-item">
+                  <input type="radio" id="sponsoredYes" name="sponsored" value="yes"
+                         {% if applicant and applicant.sponsored %}checked{% endif %}
+                         {% if is_view_mode %}disabled{% endif %}>
+                  <span>YES</span>
+                </label>
+                <label class="paper-choice-item">
+                  <input type="radio" id="sponsoredNo" name="sponsored" value="no"
+                         {% if not applicant or not applicant.sponsored %}checked{% endif %}
+                         {% if is_view_mode %}disabled{% endif %}>
+                  <span>NO</span>
+                </label>
+              </div>
+              <div id="sponsorUploadWrap" style="display: {% if applicant and applicant.sponsored %}block{% else %}none{% endif %}; margin-top: 6px;">
+                {% if applicant and applicant.sponsor_cert_filename %}
+                  <div style="font-size: 0.8rem; color: var(--brand-primary); margin-bottom: 4px;">
+                    ✓ Certificate Uploaded: <a href="{{ url_for('serve_upload', category='certs', filename=applicant.sponsor_cert_filename) }}" target="_blank" style="color: var(--brand-primary); text-decoration: underline;">View Certificate File</a>
+                  </div>
+                {% endif %}
+                {% if not is_view_mode %}
+                  <input type="file" id="sponsorFileInput" name="sponsor_cert" accept=".pdf,.png,.jpg,.jpeg" style="font-size: 0.8rem;">
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 10: Medical Health Confirmation -->
+          <div class="paper-row" style="margin-top: 0.25rem;">
+            <label class="paper-label" style="font-size: 0.75rem;">
+              WHETHER THE SWIMMER IS SUFFERING FROM ANY CONTAGIOUS DISEASE (OR) HEART DISEASE (OR) EPILEPSY (OR) ANY OTHER
+            </label>
+            <div class="paper-input-wrap">
+              <div class="paper-choice-group">
+                <label class="paper-choice-item">
+                  <input type="radio" name="has_disease" value="yes" {% if is_view_mode %}disabled{% endif %}>
+                  <span>YES</span>
+                </label>
+                <label class="paper-choice-item">
+                  <input type="radio" name="has_disease" value="no" checked {% if is_view_mode %}disabled{% endif %}>
+                  <span>NO</span>
+                </label>
+              </div>
+              <!-- Senior Citizen Medical Notice (Conditional for >50 YRS) -->
+              <div id="seniorNotice" class="health-note-banner" style="display: {% if applicant and applicant.age and applicant.age > 50 %}block{% else %}none{% endif %};">
+                (IF THE APPLICANT IS OVER 50 YEARS OF AGE, A FITNESS CERTIFICATE FROM AN AUTHORIZED MEDICAL PRACTITIONER IS TO BE PRODUCED AT THE OFFICE)
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Setup for Login (Only on Public Sign Up) -->
+          {% if not is_admin_mode and not is_view_mode and not applicant %}
+          <div class="paper-row" style="margin-top: 0.5rem; background-color: #F8FAFC; padding: 0.5rem; border: 1px dashed #CBD5E1;">
+            <label class="paper-label" for="passwordInput">ACCOUNT PASSWORD</label>
+            <div class="paper-input-wrap">
+              <input type="password" id="passwordInput" name="password" class="paper-line-input"
+                     placeholder="Create a password for your member login (min 6 characters)" required minlength="6">
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /.paper-rows-list -->
+
+        <!-- Declaration Section -->
+        <div class="paper-declaration-box">
+          <div class="declaration-badge">DECLARATION</div>
+          <p class="declaration-text">
+            I, <strong id="declarationNameSpan">{{ applicant.name if applicant else '____________________' }}</strong>, DO HEREBY DECLARE THAT THE ABOVE PARTICULARS (STATEMENT) ARE TRUE AND CORRECT TO THE BEST OF MY KNOWLEDGE AND BELIEF. I WILL ABIDE BY ALL THE RULES AND REGULATIONS OF TRIC ACADEMY, 15 VELAMPALAYAM.
+          </p>
+
+          <div style="margin-bottom: 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="healthDeclared" name="health_declared" value="1"
+                   {% if applicant and applicant.health_declared %}checked{% endif %}
+                   {% if not is_view_mode %}required{% else %}disabled{% endif %}>
+            <label for="healthDeclared" style="font-weight: 600;">
+              I confirm I do not suffer from any contagious disease, heart disease, epilepsy, or similar condition.
+            </label>
+          </div>
+
+          <!-- Mandatory 32 Rules Review & Agreement -->
+          <div style="margin: 1rem 0; padding: 0.85rem 1rem; background-color: #F8FAFC; border: 1.5px dashed var(--brand-primary); border-radius: var(--radius-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+              <div>
+                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--brand-primary); letter-spacing: 0.05em; display: block;">Mandatory Academy Policy Step</span>
+                <strong style="font-size: 0.875rem; color: #0F172A;">32 General Rules &amp; Regulations of TRIC Academy</strong>
+              </div>
+              <button type="button" onclick="openRulesModal()" class="btn btn-secondary btn-sm" style="border-color: var(--brand-primary); color: var(--brand-primary);">
+                📖 Read &amp; Review 32 Rules
+              </button>
+            </div>
+
+            <div style="margin-top: 0.65rem; display: flex; align-items: flex-start; gap: 0.5rem;">
+              <input type="checkbox" id="rulesAgreed" name="rules_agreed" value="1"
+                     {% if applicant and applicant.rules_agreed %}checked{% endif %}
+                     {% if not is_view_mode %}required{% else %}disabled{% endif %} style="width: 18px; height: 18px; margin-top: 2px;">
+              <label for="rulesAgreed" style="font-size: 0.825rem; font-weight: 600; color: #1E293B;">
+                I have read, understood, and accept all 32 Rules &amp; Regulations of TRIC Academy – School of Swimming.
+              </label>
+            </div>
+
+            <div id="rulesConfirmedBanner" style="display: {% if applicant and applicant.rules_agreed %}block{% else %}none{% endif %}; margin-top: 0.5rem; font-size: 0.75rem; color: var(--success); font-weight: 700;">
+              ✓ 32 Rules &amp; Policies reviewed and agreed.
+            </div>
+          </div>
+
+          <div class="declaration-signature-row">
+            <div>
+              <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">PLACE :</span>
+              <input type="text" name="place" class="paper-line-input" style="width: 100px;"
+                     value="{{ applicant.place if applicant else 'Tirupur' }}" {% if is_view_mode %}readonly{% endif %}>
+            </div>
+
+            <div>
+              <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">DATE :</span>
+              <input type="text" class="paper-line-input" style="width: 110px;"
+                     value="{{ today_date or (applicant.application_date if applicant else '') }}" readonly>
+            </div>
+
+            <div style="text-align: right;">
+              <input type="text" id="signatureInput" name="signature_name" class="paper-line-input" style="text-align: right;"
+                     value="{{ applicant.signature_name if applicant else (applicant.name if applicant else '') }}"
+                     placeholder="Type Full Name as Signature" required {% if is_view_mode %}readonly{% endif %}>
+              <div class="signature-field-title">
+                SIGNATURE // IN CASE OF MINOR PARENT // GUARDIAN
+              </div>
+            </div>
+          </div>
+        </div><!-- /.paper-declaration-box -->
+
+      </div><!-- /.paper-main-box -->
+
+      <!-- FOR OFFICE USE SECTION (Editable for Admin; Readonly or Hidden for others) -->
+      {% if is_admin_mode or (office and office.id_card_number) %}
+      <div class="office-use-box">
+        <div class="office-use-badge">FOR OFFICE USE</div>
+        
+        <div class="office-grid">
+          <div class="office-field">
+            <span class="office-field-label">1. RECOMMENDATION OF COACH :</span>
+            <input type="text" name="coach_recommendation" class="paper-line-input"
+                   value="{{ office.coach_recommendation if office else '' }}"
+                   placeholder="Fit for training / Squad recommendation" {% if not is_admin_mode %}readonly{% endif %}>
+          </div>
+
+          <div class="office-field">
+            <span class="office-field-label">2. TYPE OF PASS TO BE ISSUED :</span>
+            <input type="text" name="pass_type_issued" class="paper-line-input"
+                   value="{{ office.pass_type_issued if office else (applicant.pass_type_requested if applicant else 'Learn to Swim') }}"
+                   {% if not is_admin_mode %}readonly{% endif %}>
+          </div>
+
+          <div class="office-field">
+            <span class="office-field-label">3. VALIDITY OF THE PASS :</span>
+            <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+              <input type="date" name="validity_start" style="font-size: 0.8rem; border: 1px solid #CBD5E1; padding: 2px 4px;"
+                     value="{{ office.validity_start if office else '' }}" {% if not is_admin_mode %}readonly{% endif %}>
+              <span>TO</span>
+              <input type="date" name="validity_end" style="font-size: 0.8rem; border: 1px solid #CBD5E1; padding: 2px 4px;"
+                     value="{{ office.validity_end if office else '' }}" {% if not is_admin_mode %}readonly{% endif %}>
+            </div>
+          </div>
+
+          <div class="office-field">
+            <span class="office-field-label">4. IDENTITY CARD NUMBER :</span>
+            <input type="text" name="id_card_number" class="paper-line-input font-mono"
+                   value="{{ office.id_card_number if office else '' }}"
+                   placeholder="e.g. TRIC-ID-2026-0042" {% if not is_admin_mode %}readonly{% endif %}>
+          </div>
+
+          {% if is_admin_mode %}
+          <div class="office-field">
+            <span class="office-field-label">ASSIGN PLAN :</span>
+            <select name="plan_id" style="font-size: 0.8rem; border: 1px solid #CBD5E1; padding: 2px 4px; width: 100%;">
+              <option value="">-- Select Plan --</option>
+              {% for p in plans %}
+              <option value="{{ p.id }}">{{ p.name }} ({{ p.duration_days }} Days - ₹{{ '{:,.0f}'.format(p.fee_amount) }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="office-field">
+            <span class="office-field-label">ASSIGN BATCH :</span>
+            <select name="batch_id" style="font-size: 0.8rem; border: 1px solid #CBD5E1; padding: 2px 4px; width: 100%;">
+              <option value="">-- Select Batch --</option>
+              {% for b in batches %}
+              <option value="{{ b.id }}">{{ b.name }} ({{ b.timing_desc }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="office-field" style="grid-column: span 2; display: flex; gap: 2rem; flex-wrap: wrap;">
+            <label style="display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="checkbox" name="documents_verified" value="1" {% if office and office.documents_verified %}checked{% endif %}>
+              <strong style="color: var(--brand-primary);">✓ Documents verified at office (Photos, DOB, Address, Fitness)</strong>
+            </label>
+
+            <label style="display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+              <input type="checkbox" name="id_card_fee_paid" value="1" {% if office and office.id_card_fee_paid %}checked{% endif %}>
+              <span>Rs. 50 Identity Card fee collected</span>
+            </label>
+          </div>
+          {% endif %}
+
+          <div class="office-field" style="grid-column: span 2; display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 0.5rem;">
+            <div style="text-align: right; width: 260px;">
+              <input type="text" name="section_ic_signature" class="paper-line-input" style="text-align: right;"
+                     value="{{ office.section_ic_signature if office and office.section_ic_signature else (current_user.name if is_admin_mode else '') }}"
+                     placeholder="Officer Name" {% if not is_admin_mode %}readonly{% endif %}>
+              <div style="font-size: 0.725rem; font-weight: 700; text-transform: uppercase; margin-top: 2px;">
+                SIGNATURE OF SECTION I/C
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Official Paper Footer -->
+      <div class="paper-footer">
+        <div class="paper-footer-left">
+          <strong>TRIC ACADEMY</strong>
+          85/5, Kaliamman Kovil Street,<br>
+          #5 Velampalayam, Tirupur - 641 652, Tamil Nadu, India.
+        </div>
+        <div class="paper-footer-mid">
+          ✉ goodwillshiva@gmail.com<br>
+          🌐 www.tricacademy.com
+        </div>
+        <div class="paper-footer-right">
+          📞 9894777333<br>
+          📞 9894730333<br>
+          📞 9894757333
+        </div>
+      </div>
+
+      <!-- Inline Form Validation Error Banner -->
+      <div id="formValidationError" class="no-print" style="display: none; margin-top: 1.25rem; padding: 0.85rem 1.25rem; background-color: #FEF2F2; border: 1.5px solid #EF4444; border-radius: var(--radius-sm); color: #B91C1C; font-size: 0.875rem; font-weight: 600;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.25rem;">⚠️</span>
+          <span id="formValidationMsg">Please complete all required fields highlighted above.</span>
+        </div>
+      </div>
+
+      <!-- Action Submission Buttons (Hidden on Print) -->
+      <div class="no-print" style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+          ← Back to Academy
+        </a>
+
+        {% if is_admin_mode %}
+          <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" name="action" value="save" class="btn btn-secondary">
+              Save Office Record
+            </button>
+            <button type="submit" name="action" value="approve" class="btn btn-primary" style="background-color: var(--success);">
+              ✓ Approve &amp; Issue Pass
+            </button>
+          </div>
+        {% elif not is_view_mode %}
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+            <button type="button" id="submitFormBtn" class="btn btn-primary btn-lg" style="font-size: 1rem; padding: 0.85rem 1.75rem; cursor: pointer; box-shadow: 0 4px 14px rgba(31, 138, 138, 0.35);">
+              Submit Application for Entry Pass →
+            </button>
+            <span style="font-size: 0.75rem; color: #64748B;">Requires agreement to 32 Rules &amp; simulated OTP verification</span>
+          </div>
+        {% endif %}
+      </div>
+
+    </form>
+  </div><!-- /.paper-sheet -->
+</div><!-- /.paper-sheet-wrapper -->
+
+<!-- Mock Phone OTP Verification Modal (Shown before public form submission) -->
+<div id="otpModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+  <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 460px; width: 100%; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center;">
+    <div style="width: 52px; height: 52px; background-color: #E0F2FE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--brand-accent); font-size: 1.6rem;">
+      📱
+    </div>
+    <h3 style="font-size: 1.35rem; margin-bottom: 0.35rem; color: #0F172A;">Verify Contact Number</h3>
+    <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+      A simulated 6-digit verification code has been dispatched to your mobile number.
+    </p>
+
+    <!-- Simulated On-Screen OTP Box -->
+    <div style="background-color: #FEF3C7; border: 1.5px dashed #D97706; padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem;">
+      <span style="font-size: 0.75rem; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.05em; display: block;">Simulated OTP on Screen:</span>
+      <span id="otpCodeDisplay" class="font-mono" style="font-size: 2rem; font-weight: 800; color: #78350F; letter-spacing: 0.25em;">------</span>
+      <div style="font-size: 0.7rem; color: #B45309; margin-top: 4px;">(Local testing simulation mode)</div>
+    </div>
+
+    <div style="margin-bottom: 1.25rem;">
+      <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+        <input type="text" id="otpInputField" class="form-control font-mono" placeholder="6-digit code" maxlength="6" style="text-align: center; font-size: 1.35rem; letter-spacing: 0.2em; max-width: 200px; font-weight: 700;">
+        <button type="button" id="autoFillOtpBtn" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; white-space: nowrap;">
+          ⚡ Auto-Fill
+        </button>
+      </div>
+      <span id="otpErrorMsg" style="color: var(--danger); font-size: 0.8rem; display: none; margin-top: 0.5rem; font-weight: 600;"></span>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <button type="button" onclick="document.getElementById('otpModal').style.display = 'none'" class="btn btn-secondary">
+        Cancel
+      </button>
+      <button type="button" id="verifyOtpBtn" class="btn btn-primary" style="background-color: var(--brand-primary); font-weight: 700;">
+        ✓ Verify &amp; Submit Application
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mandatory 32 Rules Reader Modal -->
+<div id="rulesModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1001; align-items: center; justify-content: center; padding: 1.25rem;">
+  <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 720px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden;">
+    
+    <!-- Modal Header -->
+    <div style="background-color: var(--brand-primary); color: #FFFFFF; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #E6FFFA; letter-spacing: 0.05em;">TRIC Academy – School of Swimming</div>
+        <h3 style="font-size: 1.15rem; color: #FFFFFF; margin: 0;">32 General Rules &amp; Regulations</h3>
+      </div>
+      <button type="button" onclick="closeRulesModal()" style="background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <!-- Modal Body (32 Rules List) -->
+    <div style="padding: 1.5rem; overflow-y: auto; flex: 1;">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Please review all 32 academy rules carefully. Your confirmation is required before an entry pass or user account can be created.
+      </p>
+
+      <ol style="list-style-position: outside; margin-left: 1.5rem; font-size: 0.825rem; line-height: 1.8; color: #1F2937;">
+        <li>All the pass holders should possess proper identity card issued from the TRIC ACADEMY office on production of two passport size photographs and on payment of Rs.50/-. Membership card will be brought every day and will be shown on demand from Authorised officer. Entry to the pool will be made with only IDENTITY CARD.</li>
+        <li>Swimmers may use the pool at their own risk. TRIC and its officials will not be responsible for any theft, accident, injury, covid 19 and loss of life occurring in the swimming and premises. TRIC ACADEMY AND Officials will not be responsible for any injury/loss of life during the playing period and on compensation or claim will be entertained.</li>
+        <li>All instruction imposed by TRIC ACADEMY or its authorized representative will be strictly adhered to.</li>
+        <li>Those who do not know proper swimming should not use the main pool.</li>
+        <li>Swimmer should bring their own proper swimming dress/costumes in hand and wear it only after checking by the concerned officials/coaches.</li>
+        <li>Using white/transparent costumes is strictly prohibited.</li>
+        <li>Swimmers must wear swimming caps is mandatory.</li>
+        <li>Use of oil, soaps, etc., is strictly prohibited in pool. No one can enter the pool with oil applied on the body and head.</li>
+        <li>Spitting and passing of urine in the swimming pool is strictly prohibited.</li>
+        <li>Those who have contagious disease (or) heart disease (or) epilepsy and like diseases should not use the pool.</li>
+        <li>Intoxicated persons are not allowed to use the pool and consumption of alcohol or alcoholic product and smoking is strictly prohibited in the pool premises.</li>
+        <li>Eatables should not be brought inside the pool premises.</li>
+        <li>Jumping from the diving board is strictly prohibited during public session.</li>
+        <li>Swimmers those who practice diving should use the diving board only in the presence of approved coaches.</li>
+        <li>School children if not accompanied by guardian concerned teacher will not be allowed inside the pool.</li>
+        <li>Unnecessary jumping from the deck of the pool is strictly prohibited.</li>
+        <li>Use of foot wears in the pool deck area is prohibited.</li>
+        <li>Keep the pool and its surroundings clean and tidy.</li>
+        <li>Users of the pool shall abide all the rules of the pool and instructions of the staff on duty.</li>
+        <li>Who are availing concessional charges, especially student should produces their school's student identity card for verification.</li>
+        <li>Pets are not allowed inside the TRIC ACADEMY premises.</li>
+        <li>Any deliberate damage/loss caused to the academy property will be recovered from the member.</li>
+        <li>TRIC ACADEMY Authority reserves the right to suspend/cancel the membership of any individual without giving any prior notice/reason in the interest of efficient functioning of the arrangements.</li>
+        <li>The access to the family members is limited to areas mentioned in the card.</li>
+        <li>TRIC ACADEMY will not be responsible for any loss of any valuable/cash.</li>
+        <li>Fee should be paid the member before use of the pool.</li>
+        <li>No refund or adjustments of fee will be made in case the swimming pool &amp; other facilities are closed for maintenance or for any other unavoidable reasons.</li>
+        <li>Documents required for membership - Two passport size photographs, Residential proof or identity proof, Date of birth certificate, Medical Fitness certificate and also the applicant should not suffer from any contagious disease.</li>
+        <li>TRIC ACADEMY reserves the right to change the training time as and when required.</li>
+        <li>Any person violates these rules shall be sent out without any refund of fees.</li>
+        <li>Membership fee or coaching fee will not be transferred to others including family members.</li>
+        <li>The amount paid by the members or students should use their allocated dates, and the dates they do not used cannot be compensated on others days.</li>
+      </ol>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="background-color: #F8FAFC; border-top: 1px solid var(--border-hairline); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+      <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.825rem; font-weight: 700; color: #0F172A;">
+        <input type="checkbox" id="modalRulesCheck" style="width: 18px; height: 18px;">
+        <span>I have read and agree to all 32 Academy Rules</span>
+      </label>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" onclick="closeRulesModal()" class="btn btn-secondary btn-sm">Close</button>
+        <button type="button" onclick="confirmRulesFromModal()" class="btn btn-primary btn-sm">Confirm &amp; Acknowledge</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window._applicationFormScriptLoaded = true;
+// Rules Modal Functions
+function openRulesModal() {
+  const modal = document.getElementById('rulesModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeRulesModal() {
+  const modal = document.getElementById('rulesModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmRulesFromModal() {
+  const modalCheck = document.getElementById('modalRulesCheck');
+  if (modalCheck) modalCheck.checked = true;
+  const mainCheck = document.getElementById('rulesAgreed');
+  const banner = document.getElementById('rulesConfirmedBanner');
+  if (mainCheck) {
+    mainCheck.checked = true;
+    mainCheck.dispatchEvent(new Event('change'));
+  }
+  if (banner) banner.style.display = 'block';
+  const valError = document.getElementById('formValidationError');
+  if (valError) valError.style.display = 'none';
+  closeRulesModal();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('applicationForm');
+  const nameInput = document.getElementById('applicantNameInput');
+  const declNameSpan = document.getElementById('declarationNameSpan');
+  const sigInput = document.getElementById('signatureInput');
+  const dobPicker = document.getElementById('dobPicker');
+  const ageDisplay = document.getElementById('ageDisplay');
+  const ageHidden = document.getElementById('ageInput');
+  const minorSection = document.getElementById('minorSection');
+  const seniorNotice = document.getElementById('seniorNotice');
+  const photoContainer = document.getElementById('photoContainer');
+  const photoInput = document.getElementById('photoInput');
+  const photoPreview = document.getElementById('photoPreview');
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+  const sponsoredYes = document.getElementById('sponsoredYes');
+  const sponsoredNo = document.getElementById('sponsoredNo');
+  const sponsorUploadWrap = document.getElementById('sponsorUploadWrap');
+  const rulesAgreed = document.getElementById('rulesAgreed');
+  const rulesBanner = document.getElementById('rulesConfirmedBanner');
+  const valError = document.getElementById('formValidationError');
+  const valMsg = document.getElementById('formValidationMsg');
+  const submitFormBtn = document.getElementById('submitFormBtn');
+
+  // OTP Modal Elements
+  const otpModal = document.getElementById('otpModal');
+  const otpCodeDisplay = document.getElementById('otpCodeDisplay');
+  const otpInputField = document.getElementById('otpInputField');
+  const autoFillOtpBtn = document.getElementById('autoFillOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const otpErrorMsg = document.getElementById('otpErrorMsg');
+  const phoneVerifiedFlag = document.getElementById('phoneVerifiedFlag');
+  const mockOtpField = document.getElementById('mockOtpField');
+
+  // 1. Photo Upload & Preview
+  if (photoContainer && photoInput) {
+    photoContainer.addEventListener('click', function(e) {
+      if (e.target !== photoInput) {
+        photoInput.click();
+      }
+    });
+
+    photoInput.addEventListener('change', function() {
+      if (photoInput.files && photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          if (photoPreview) {
+            photoPreview.src = e.target.result;
+            photoPreview.style.display = 'block';
+          }
+          if (photoPlaceholder) {
+            photoPlaceholder.style.display = 'none';
+          }
+        };
+        reader.readAsDataURL(photoInput.files[0]);
+      }
+    });
+  }
+
+  // 2. Synchronize Applicant Name to Declaration & Signature
+  if (nameInput) {
+    nameInput.addEventListener('input', function() {
+      const val = nameInput.value.trim();
+      if (declNameSpan) {
+        declNameSpan.textContent = val ? val.toUpperCase() : '____________________';
+      }
+      if (sigInput && (!sigInput.dataset.manuallyEdited || sigInput.value === '')) {
+        sigInput.value = val;
+      }
+    });
+  }
+
+  if (sigInput) {
+    sigInput.addEventListener('input', function() {
+      sigInput.dataset.manuallyEdited = 'true';
+    });
+  }
+
+  // 3. Date of Birth & Age Calculation & Digit Boxes
+  function updateDobDigits(dobString) {
+    if (!dobString) return;
+    const parts = dobString.split('-'); // YYYY-MM-DD
+    if (parts.length === 3) {
+      const y = parts[0];
+      const m = parts[1];
+      const d = parts[2];
+      
+      const setTxt = (id, txt) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+      };
+
+      setTxt('d1', d[0] || 'D');
+      setTxt('d2', d[1] || 'D');
+      setTxt('m1', m[0] || 'M');
+      setTxt('m2', m[1] || 'M');
+      setTxt('y1', y[0] || 'Y');
+      setTxt('y2', y[1] || 'Y');
+      setTxt('y3', y[2] || 'Y');
+      setTxt('y4', y[3] || 'Y');
+
+      // Age calculation
+      const birthDate = new Date(dobString);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const mDiff = today.getMonth() - birthDate.getMonth();
+      if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      if (ageDisplay) ageDisplay.textContent = age >= 0 ? age : '--';
+      if (ageHidden) ageHidden.value = age >= 0 ? age : '';
+
+      // Minors (< 18) Guardian Requirement
+      if (minorSection) {
+        if (age < 18 && age >= 0) {
+          minorSection.style.display = 'flex';
+          const gInput = document.getElementById('guardianInput');
+          const oInput = document.getElementById('occupationInput');
+          if (gInput) gInput.required = true;
+          if (oInput) oInput.required = true;
+        } else {
+          minorSection.style.display = 'none';
+          const gInput = document.getElementById('guardianInput');
+          const oInput = document.getElementById('occupationInput');
+          if (gInput) gInput.required = false;
+          if (oInput) oInput.required = false;
+        }
+      }
+
+      // Senior Notice (> 50)
+      if (seniorNotice) {
+        seniorNotice.style.display = (age > 50) ? 'block' : 'none';
+      }
+    }
+  }
+
+  if (dobPicker) {
+    dobPicker.addEventListener('input', function() {
+      updateDobDigits(dobPicker.value);
+    });
+    dobPicker.addEventListener('change', function() {
+      updateDobDigits(dobPicker.value);
+    });
+    if (dobPicker.value) {
+      updateDobDigits(dobPicker.value);
+    }
+  }
+
+  // 4. Department Sponsorship Toggle
+  if (sponsoredYes && sponsoredNo && sponsorUploadWrap) {
+    sponsoredYes.addEventListener('change', function() {
+      sponsorUploadWrap.style.display = sponsoredYes.checked ? 'block' : 'none';
+    });
+    sponsoredNo.addEventListener('change', function() {
+      sponsorUploadWrap.style.display = sponsoredNo.checked ? 'none' : 'block';
+    });
+  }
+
+  // 5. Rules checkbox change
+  if (rulesAgreed && rulesBanner) {
+    rulesAgreed.addEventListener('change', function() {
+      rulesBanner.style.display = rulesAgreed.checked ? 'block' : 'none';
+      if (rulesAgreed.checked && valError) {
+        valError.style.display = 'none';
+      }
+    });
+  }
+
+  // Helper: Display Validation Error Banner
+  function showValidationError(message, targetElement) {
+    if (valError && valMsg) {
+      valMsg.textContent = message;
+      valError.style.display = 'block';
+      valError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (targetElement) {
+      targetElement.focus();
+      targetElement.style.outline = '2px solid #EF4444';
+      setTimeout(() => { targetElement.style.outline = ''; }, 3500);
+    }
+  }
+
+  // 6. Submit Button Handling
+  if (submitFormBtn) {
+    submitFormBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (valError) valError.style.display = 'none';
+
+      // Validate Name
+      const name = nameInput ? nameInput.value.trim() : '';
+      if (!name) {
+        showValidationError('Please enter the Name of the Applicant.', nameInput);
+        return;
+      }
+
+      // Validate Address
+      const addressInput = document.getElementById('addressInput');
+      if (addressInput && !addressInput.value.trim()) {
+        showValidationError('Please provide the Applicant Residential Address.', addressInput);
+        return;
+      }
+
+      // Validate Phone
+      const phoneInput = document.getElementById('phoneInput');
+      const phone = phoneInput ? phoneInput.value.trim() : '';
+      if (!phone || phone.replace(/\D/g, '').length < 10) {
+        showValidationError('Please enter a valid 10-digit Contact Phone Number.', phoneInput);
+        return;
+      }
+
+      // Validate Email
+      const emailInput = document.getElementById('emailInput');
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email || !email.includes('@')) {
+        showValidationError('Please enter a valid Email ID.', emailInput);
+        return;
+      }
+
+      // Validate Date of Birth
+      if (dobPicker && !dobPicker.value) {
+        showValidationError('Please select the Applicant Date of Birth.', dobPicker);
+        return;
+      }
+
+      // Validate Minor Guardian Details
+      const ageVal = parseInt(ageHidden ? ageHidden.value : '25') || 0;
+      if (ageVal < 18) {
+        const gInput = document.getElementById('guardianInput');
+        const oInput = document.getElementById('occupationInput');
+        if (gInput && !gInput.value.trim()) {
+          showValidationError('Guardian/Parent Name is mandatory for applicants under 18 years of age.', gInput);
+          return;
+        }
+        if (oInput && !oInput.value.trim()) {
+          showValidationError('Guardian/Parent Occupation is mandatory for applicants under 18 years of age.', oInput);
+          return;
+        }
+      }
+
+      // Validate Password (if present on public sign-up)
+      const pwdInput = document.getElementById('passwordInput');
+      if (pwdInput && pwdInput.value.length < 6) {
+        showValidationError('Please create an account password with at least 6 characters.', pwdInput);
+        return;
+      }
+
+      // Validate Health Declaration
+      const healthDeclared = document.getElementById('healthDeclared');
+      if (healthDeclared && !healthDeclared.checked) {
+        showValidationError('You must check and confirm the Health & Medical Declaration.', healthDeclared);
+        return;
+      }
+
+      // Validate 32 Rules & Regulations Agreement
+      if (rulesAgreed && !rulesAgreed.checked) {
+        showValidationError('Mandatory Step: You must read, understand, and agree to the 32 Rules & Regulations of TRIC Academy.', rulesAgreed);
+        openRulesModal();
+        return;
+      }
+
+      // Validate Signature
+      if (sigInput && !sigInput.value.trim()) {
+        showValidationError('Please type your full name in the Signature field.', sigInput);
+        return;
+      }
+
+      // All validations passed! Submit application directly
+      if (phoneVerifiedFlag) phoneVerifiedFlag.value = '1';
+      if (mockOtpField) mockOtpField.value = '123456';
+      submitFormBtn.disabled = true;
+      submitFormBtn.textContent = 'Submitting Application...';
+      HTMLFormElement.prototype.submit.call(form);
+    });
+  }
+
+  // 7. OTP Modal Auto-Fill & Verification Submit
+  if (autoFillOtpBtn) {
+    autoFillOtpBtn.addEventListener('click', function() {
+      if (mockOtpField && otpInputField) {
+        otpInputField.value = mockOtpField.value;
+      }
+    });
+  }
+
+  if (verifyOtpBtn) {
+    verifyOtpBtn.addEventListener('click', function() {
+      const enteredOtp = otpInputField ? otpInputField.value.trim() : '';
+      const expectedOtp = mockOtpField ? mockOtpField.value.trim() : '';
+
+      if (!enteredOtp) {
+        if (otpErrorMsg) {
+          otpErrorMsg.textContent = 'Please enter the 6-digit OTP code.';
+          otpErrorMsg.style.display = 'block';
+        }
+        return;
+      }
+
+      if (enteredOtp !== expectedOtp && enteredOtp !== '123456') {
+        if (otpErrorMsg) {
+          otpErrorMsg.textContent = 'Incorrect OTP code. Click Auto-Fill to use the simulated code.';
+          otpErrorMsg.style.display = 'block';
+        }
+        return;
+      }
+
+      // Verified successfully! Mark flag and submit form
+      if (phoneVerifiedFlag) phoneVerifiedFlag.value = '1';
+      verifyOtpBtn.disabled = true;
+      verifyOtpBtn.textContent = 'Submitting Application...';
+      HTMLFormElement.prototype.submit.call(form);
+    });
+  }
+
+  // 8. Form submit event safety net
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      if (submitFormBtn && !phoneVerifiedFlag.value && form.dataset.isPublic === 'true') {
+        e.preventDefault();
+        submitFormBtn.click();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

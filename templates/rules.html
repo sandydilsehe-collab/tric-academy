@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Rules & Regulations – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; padding-top: 3rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      {% if current_user %}
+        <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Dashboard
+        </a>
+      {% else %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Home
+        </a>
+      {% endif %}
+      <div>
+        <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Official Academy Guidelines</span>
+        <h1 style="font-size: 1.85rem; margin-top: 0.25rem; margin-bottom: 0;">Pool Rules &amp; Regulations</h1>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <button onclick="window.print()" class="btn btn-secondary btn-sm">
+        🖨️ Print Rules
+      </button>
+      {% if not current_user %}
+        <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm">
+          Apply for Pass
+        </a>
+      {% elif current_user.role == 'member' %}
+        <a href="{{ url_for('renew_membership') }}" class="btn btn-primary btn-sm" style="font-weight: 700;">
+          ⚡ Renew Pass
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; border-bottom: 1px solid var(--border-hairline); padding-bottom: 1rem;">
+      All members, swimmers, parents, and visitors are strictly required to adhere to the 32 general rules and regulations established by TRIC Academy authority.
+    </p>
+
+    <ol style="list-style-position: outside; margin-left: 1.5rem; font-size: 0.925rem; line-height: 1.8; color: #1F2937;">
+      <li style="margin-bottom: 0.75rem;">
+        All the pass holders should possess proper identity card issued from the TRIC ACADEMY office on production of two passport size photographs and on payment of Rs.50/-. Membership card will be brought every day and will be shown on demand from Authorised officer. Entry to the pool will be made with only IDENTITY CARD.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Swimmers may use the pool at their own risk. TRIC and its officials will not be responsible for any theft, accident, injury, covid 19 and loss of life occurring in the swimming and premises. TRIC ACADEMY AND Officials will not be responsible for any injury/loss of life during the playing period and on compensation or claim will be entertained.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        All instruction imposed by TRIC ACADEMY or its authorized representative will be strictly adhered to.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Those who do not know proper swimming should not use the main pool.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Swimmer should bring their own proper swimming dress/costumes in hand and wear it only after checking by the concerned officials/coaches.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Using white/transparent costumes is strictly prohibited.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Swimmers must wear swimming caps is mandatory.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Use of oil, soaps, etc., is strictly prohibited in pool. No one can enter the pool with oil applied on the body and head.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Spitting and passing of urine in the swimming pool is strictly prohibited.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Those who have contagious disease (or) heart disease (or) epilepsy and like diseases should not use the pool.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Intoxicated persons are not allowed to use the pool and consumption of alcohol or alcoholic product and smoking is strictly prohibited in the pool premises.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Eatables should not be brought inside the pool premises.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Jumping from the diving board is strictly prohibited during public session.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Swimmers those who practice diving should use the diving board only in the presence of approved coaches.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        School children if not accompanied by guardian concerned teacher will not be allowed inside the pool.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Unnecessary jumping from the deck of the pool is strictly prohibited.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Use of foot wears in the pool deck area is prohibited.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Keep the pool and its surroundings clean and tidy.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Users of the pool shall abide all the rules of the pool and instructions of the staff on duty.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Who are availing concessional charges, especially student should produces their school's student identity card for verification.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Pets are not allowed inside the TRIC ACADEMY premises.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Any deliberate damage/loss caused to the academy property will be recovered from the member.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        TRIC ACADEMY Authority reserves the right to suspend/cancel the membership of any individual without giving any prior notice/reason in the interest of efficient functioning of the arrangements.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        The access to the family members is limited to areas mentioned in the card.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        TRIC ACADEMY will not be responsible for any loss of any valuable/cash.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Fee should be paid the member before use of the pool.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        No refund or adjustments of fee will be made in case the swimming pool & other facilities are closed for maintenance or for any other unavoidable reasons.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Documents required for membership - Two passport size photographs, Residential proof or identity proof, Date of birth certificate, Medical Fitness certificate and also the applicant should not suffer from any contagious disease.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        TRIC ACADEMY reserves the right to change the training time as and when required.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Any person violates these rules shall be sent out without any refund of fees.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        Membership fee or coaching fee will not be transferred to others including family members.
+      </li>
+      <li style="margin-bottom: 0.75rem;">
+        The amount paid by the members or students should use their allocated dates, and the dates they do not used cannot be compensated on others days.
+      </li>
+    </ol>
+
+    <div style="margin-top: 2.5rem; padding: 1.25rem; background-color: var(--surface-subtle); border-radius: var(--radius-sm); border: 1px solid var(--border-hairline);">
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; text-transform: uppercase;">Declaration Undertaking</h4>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+        "I have read and understood all the above rules. I do hereby undertake that all injuries/loss of life sustained by me/my above ward trainee due to accident during swimming competition and practice will be at risk and responsibility and also I undertake that I/my above ward will by the rules and regulations stated above."
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

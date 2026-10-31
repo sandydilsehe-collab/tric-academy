@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Membership Plans &amp; Fees – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 740px; padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Academy Operations</span>
+      <h1 style="font-size: 1.85rem;">Membership Plan Pricing</h1>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+      ← Back to Admin Hub
+    </a>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    {% for p in plans %}
+    <div class="card" style="padding: 1.75rem 2rem;">
+      <form action="{{ url_for('admin_plans') }}" method="POST">
+        <input type="hidden" name="plan_id" value="{{ p.id }}">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.35rem; margin-bottom: 0.25rem;">{{ p.name }} Pass</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">
+              Duration: <strong>{{ p.duration_days }} continuous days</strong> · {{ p.description or '' }}
+            </p>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="position: relative; width: 140px;">
+              <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">₹</span>
+              <input type="number" name="fee_amount" step="50" class="form-control font-mono"
+                     value="{{ '{:.0f}'.format(p.fee_amount) }}" style="padding-left: 24px; font-weight: 700; font-size: 1.15rem;" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+              Update Fee
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card" style="margin-top: 2rem; background-color: var(--surface-subtle);">
+    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Pricing Policy Notes</h4>
+    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+      Updates here immediately reflect on the public landing page Fees section, the Member renewal checkout, and the Admin applicant endorsement form.
+    </p>
+  </div>
+</div>
+{% endblock %}

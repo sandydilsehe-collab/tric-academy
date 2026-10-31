@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}UPI Instant Renewal – TRIC Academy{% endblock %}
+
+{% block extra_head %}
+<style>
+  .upi-brand-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  @media (min-width: 480px) {
+    .upi-brand-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .upi-app-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.85rem 0.5rem;
+    border: 1.5px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: #FFFFFF;
+    text-decoration: none;
+    color: var(--text-main);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .upi-app-btn:hover {
+    border-color: var(--brand-primary);
+    background: #F0FDFA;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  }
+  .upi-app-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #D97706;
+    margin-right: 6px;
+    animation: pulseAnimation 1.5s infinite;
+  }
+  @keyframes pulseAnimation {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.7; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <!-- Navigation Back Bar & Breadcrumbs -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; text-decoration: none;">
+      <span>←</span>
+      <span>Back to Member Dashboard</span>
+    </a>
+    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
+      <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none;">Home</a>
+      <span>/</span>
+      <a href="{{ url_for('member_dashboard') }}" style="color: var(--text-muted); text-decoration: none;">Member Portal</a>
+      <span>/</span>
+      <span style="color: var(--brand-primary); font-weight: 700;">Renew Pass</span>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 2.5rem 2rem;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #DCFCE7; color: #15803D; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">
+        <span>⚡ Instant UPI Intent Gateway</span>
+      </div>
+      <h1 style="font-size: 1.85rem; margin-top: 0.5rem; margin-bottom: 0.25rem;">Renew Academy Pass</h1>
+      <p style="font-size: 0.875rem; color: var(--text-muted);">
+        Member: <strong>{{ user.name }}</strong> (App No: <span class="font-mono">{{ user.app_no }}</span>)
+      </p>
+    </div>
+
+    <!-- Current Validity Notice -->
+    <div style="background-color: var(--surface-subtle); border-radius: var(--radius-sm); padding: 1rem 1.25rem; border: 1px solid var(--border-hairline); margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.825rem;">
+        <span style="color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Current Membership Status</span>
+        {% if days_left is not none %}
+          {% if days_left > 7 %}
+            <span class="status-badge status-active">Active ({{ days_left }} Days Left)</span>
+          {% elif days_left >= 0 %}
+            <span class="status-badge" style="color: var(--warning); font-weight: 800;">Expiring in {{ days_left }} Day{% if days_left != 1 %}s{% endif %}</span>
+          {% else %}
+            <span class="status-badge status-expired">Expired</span>
+          {% endif %}
+        {% else %}
+          <span style="color: var(--text-muted);">No Active Plan</span>
+        {% endif %}
+      </div>
+      <div class="font-mono" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-top: 4px;">
+        {{ user.start_date or 'N/A' }} &nbsp;—&nbsp; {{ user.end_date or 'N/A' }}
+      </div>
+      <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 4px;">
+        * Online renewal extends your pass seamlessly from your current expiry date with no loss of training days.
+      </div>
+    </div>
+
+    <!-- Plan Selection -->
+    <div class="form-group">
+      <label class="form-label" style="font-size: 0.95rem; font-weight: 700;">Select Renewal Plan</label>
+      <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+        {% for p in plans %}
+        <label class="plan-option-label" data-plan-id="{{ p.id }}" data-amount="{{ p.fee_amount }}" data-name="{{ p.name }}"
+               style="border: 2px solid {% if loop.first %}var(--brand-primary){% else %}var(--border-hairline){% endif %}; border-radius: var(--radius-sm); padding: 1.15rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s ease;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <input type="radio" name="plan_choice" value="{{ p.id }}" {% if loop.first %}checked{% endif %} onchange="selectPlan(this)">
+            <div>
+              <strong style="font-size: 1.05rem; color: var(--text-main);">{{ p.name }}</strong>
+              <span style="display: block; font-size: 0.8rem; color: var(--text-muted);">
+                {{ p.duration_days }} continuous days · {{ p.description or '' }}
+              </span>
+            </div>
+          </div>
+          <div class="font-mono" style="font-size: 1.3rem; font-weight: 800; color: var(--brand-primary);">
+            ₹{{ '{:,.0f}'.format(p.fee_amount) }}
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- UPI Intent Feature Callout -->
+    <div style="margin-top: 1.5rem; background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); padding: 1.1rem 1.25rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+        <span style="font-size: 1.2rem;">📱</span>
+        <strong style="font-size: 0.95rem; color: var(--text-main);">UPI Intent Web User Flow:</strong>
+      </div>
+      <ol style="margin-left: 1.5rem; font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+        <li>Click <strong>"Pay ₹<span class="liveBtnAmt">{{ '{:,.0f}'.format(plans[0].fee_amount if plans else 499) }}</span>"</strong> below.</li>
+        <li>The browser launches your installed UPI app (Google Pay, PhonePe, Paytm, or CRED).</li>
+        <li>Enter your UPI PIN securely inside your bank's app.</li>
+        <li>The app routes back here, where our instant polling script verifies the payment in real time.</li>
+      </ol>
+    </div>
+
+    <!-- Primary Action Button: "Pay ₹499" -->
+    <div style="margin-top: 2rem;">
+      <button type="button" id="payNowBtn" onclick="initiateUPIIntentFlow()" class="btn btn-primary btn-lg" style="width: 100%; font-size: 1.15rem; padding: 0.9rem; font-weight: 800; box-shadow: 0 4px 15px rgba(31, 138, 138, 0.35); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <span>⚡</span>
+        <span>Pay ₹<span id="btnAmountDisplay">{{ '{:,.0f}'.format(plans[0].fee_amount if plans else 499) }}</span> via UPI</span>
+      </button>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+      <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+        ← Return to Member Dashboard
+      </a>
+      <a href="{{ url_for('my_pass') }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+        🖨️ View Current Entry Pass
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- UPI Intent Interactive Modal (App Chooser + Live QR + Real-Time Status Polling) -->
+<div id="upiIntentModal" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(6px); z-index: 1050; align-items: center; justify-content: center; padding: 1rem;">
+  <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 480px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); overflow: hidden; animation: fadeIn 0.2s ease;">
+    
+    <!-- Modal Header -->
+    <div style="background: var(--brand-primary); color: #FFFFFF; padding: 1.15rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 0.65rem;">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" style="width: 34px; height: 34px; background: #fff; border-radius: 50%; padding: 2px;">
+        <div>
+          <div style="font-weight: 800; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase;">TRIC ACADEMY</div>
+          <div style="font-size: 0.7rem; color: #E6FFFA;">UPI INTENT PAYMENT GATEWAY</div>
+        </div>
+      </div>
+      <button type="button" onclick="closeUPIModal()" style="background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <!-- Live Status Strip -->
+    <div style="background: #FFFBEB; border-bottom: 1px solid #FEF3C7; padding: 0.65rem 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.775rem;">
+      <div style="color: #92400E; font-weight: 600; display: flex; align-items: center;">
+        <span class="pulse-dot"></span>
+        <span id="upiPollingText">Awaiting UPI PIN authorization...</span>
+      </div>
+      <div class="font-mono" style="font-weight: 800; font-size: 1.05rem; color: var(--brand-primary);">
+        ₹<span id="modalAmountDisplay">499</span>
+      </div>
+    </div>
+
+    <div style="padding: 1.5rem;">
+      
+      <!-- Order Metadata -->
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+        <span>Order ID: <strong id="modalOrderId" class="font-mono" style="color: var(--text-main);">TRIC-UPI-...</strong></span>
+        <span>VPA: <strong class="font-mono" style="color: var(--text-main);">{{ upi_vpa }}</strong></span>
+      </div>
+
+      <!-- Option 1: Mobile App Launch (Google Pay, PhonePe, Paytm, CRED) -->
+      <div style="margin-bottom: 1.25rem;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.65rem;">
+          Launch Installed UPI App on this device:
+        </div>
+        <div class="upi-brand-grid">
+          <!-- Google Pay -->
+          <a id="gpayIntentLink" href="#" class="upi-app-btn" onclick="trackAppLaunch('Google Pay')">
+            <div class="upi-app-icon" style="background: #FFFFFF; border: 1px solid #E2E8F0; color: #4285F4;">
+              <span style="font-size: 1.1rem; font-weight: 900;">G</span>
+            </div>
+            <span>Google Pay</span>
+          </a>
+
+          <!-- PhonePe -->
+          <a id="phonepeIntentLink" href="#" class="upi-app-btn" onclick="trackAppLaunch('PhonePe')">
+            <div class="upi-app-icon" style="background: #5F259F; color: #FFFFFF;">
+              <span>पे</span>
+            </div>
+            <span>PhonePe</span>
+          </a>
+
+          <!-- Paytm -->
+          <a id="paytmIntentLink" href="#" class="upi-app-btn" onclick="trackAppLaunch('Paytm')">
+            <div class="upi-app-icon" style="background: #00BAF2; color: #FFFFFF;">
+              <span style="font-size: 0.95rem; font-weight: 900;">Pay</span>
+            </div>
+            <span>Paytm</span>
+          </a>
+
+          <!-- CRED -->
+          <a id="credIntentLink" href="#" class="upi-app-btn" onclick="trackAppLaunch('CRED')">
+            <div class="upi-app-icon" style="background: #0F172A; color: #FFFFFF;">
+              <span style="font-size: 1rem;">💳</span>
+            </div>
+            <span>CRED</span>
+          </a>
+        </div>
+
+        <!-- Generic Intent Chooser -->
+        <a id="genericIntentLink" href="#" class="btn btn-primary btn-sm" onclick="trackAppLaunch('Default UPI App')"
+           style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem; background: var(--brand-primary); font-size: 0.9rem;">
+          <span>📲 Open System UPI Chooser / Any App</span>
+        </a>
+      </div>
+
+      <!-- Divider / Or Scan QR Code -->
+      <div style="position: relative; text-align: center; margin: 1.25rem 0 1rem 0;">
+        <div style="position: absolute; inset: 50% 0 auto 0; border-top: 1px solid var(--border-hairline);"></div>
+        <span style="position: relative; background: #FFFFFF; padding: 0 0.75rem; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+          OR SCAN QR WITH ANY UPI APP
+        </span>
+      </div>
+
+      <!-- Dynamic UPI QR Code Display -->
+      <div style="text-align: center; padding: 0.75rem; background: #F8FAFC; border: 1px solid var(--border-hairline); border-radius: var(--radius-sm);">
+        <div style="display: inline-block; padding: 8px; background: #FFFFFF; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+          <img id="upiQrImage" src="" alt="UPI QR Code" style="width: 170px; height: 170px; display: block;">
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+          Point any UPI scanner (GPay, PhonePe, Paytm, BHIM, Bank apps) to pay
+        </div>
+      </div>
+
+      <!-- Simulated Webhook / Test PIN Entry Trigger (For Localhost & Verification) -->
+      <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed var(--border-hairline); text-align: center;">
+        <button type="button" id="simulateWebhookBtn" onclick="simulateUPIPINSuccess()" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 0.8rem; background: #F1F5F9; border-color: #CBD5E1;">
+          🧪 [TEST MODE] Simulate Entering UPI PIN &amp; App Return
+        </button>
+        <div style="font-size: 0.7rem; color: #94A3B8; margin-top: 4px;">
+          Triggers the webhook callback directly to test instant polling &amp; database receipt generation.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Instant Success Overlay when Poll Detects Paid -->
+<div id="paymentSuccessOverlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 1100; align-items: center; justify-content: center; padding: 1rem;">
+  <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 420px; width: 100%; padding: 2.5rem 2rem; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+    <div style="width: 64px; height: 64px; border-radius: 50%; background: #DCFCE7; color: #16A34A; font-size: 2.2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+      ✓
+    </div>
+    <h2 style="font-size: 1.45rem; color: var(--text-main); margin-bottom: 0.5rem;">UPI Payment Confirmed!</h2>
+    <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+      UPI PIN verified and transaction recorded. Your membership pass has been automatically extended.
+    </p>
+    <div class="font-mono" style="font-size: 0.85rem; font-weight: 700; color: var(--brand-primary); margin-bottom: 1.5rem;" id="successTxnId">
+      TRIC-TXN-...
+    </div>
+    <div style="font-size: 0.8rem; color: #64748B;">
+      Redirecting to official receipt...
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentPlanId = "{{ plans[0].id if plans else 1 }}";
+let currentAmount = {{ plans[0].fee_amount if plans else 499 }};
+let currentPlanName = "{{ plans[0].name if plans else 'Starter Pass' }}";
+let activeOrderId = null;
+let pollTimer = null;
+
+function selectPlan(radio) {
+  currentPlanId = radio.value;
+  const label = radio.closest('.plan-option-label');
+  currentAmount = parseFloat(label.getAttribute('data-amount'));
+  currentPlanName = label.getAttribute('data-name');
+
+  document.querySelectorAll('.plan-option-label').forEach(el => {
+    el.style.borderColor = 'var(--border-hairline)';
+  });
+  label.style.borderColor = 'var(--brand-primary)';
+
+  const formatted = Math.round(currentAmount).toLocaleString('en-IN');
+  document.getElementById('btnAmountDisplay').textContent = formatted;
+  document.querySelectorAll('.liveBtnAmt').forEach(el => el.textContent = formatted);
+}
+
+// 1. User clicks "Pay ₹499" -> creates order & opens UPI Intent modal
+async function initiateUPIIntentFlow() {
+  const payBtn = document.getElementById('payNowBtn');
+  payBtn.disabled = true;
+  payBtn.innerHTML = '<span>⏳ Initiating UPI Session...</span>';
+
+  try {
+    const res = await fetch('/api/upi/create-order?uid={{ user.id }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        plan_id: currentPlanId,
+        amount: currentAmount,
+        uid: "{{ user.id }}"
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      alert(data.error || 'Unable to initiate UPI order. Please try again.');
+      payBtn.disabled = false;
+      payBtn.innerHTML = `<span>⚡</span><span>Pay ₹${Math.round(currentAmount).toLocaleString('en-IN')} via UPI</span>`;
+      return;
+    }
+
+    activeOrderId = data.order_id;
+    document.getElementById('modalOrderId').textContent = activeOrderId;
+    document.getElementById('modalAmountDisplay').textContent = data.formatted_amount;
+    document.getElementById('upiQrImage').src = data.qr_image_url;
+
+    // Attach intents to buttons
+    document.getElementById('gpayIntentLink').href = data.intents.gpay;
+    document.getElementById('phonepeIntentLink').href = data.intents.phonepe;
+    document.getElementById('paytmIntentLink').href = data.intents.paytm;
+    document.getElementById('credIntentLink').href = data.intents.cred;
+    document.getElementById('genericIntentLink').href = data.intents.generic;
+
+    // Open Modal
+    const modal = document.getElementById('upiIntentModal');
+    modal.style.display = 'flex';
+
+    // Start instant polling loop
+    startPolling(activeOrderId);
+
+    // If on mobile device, attempt to trigger the default chooser automatically
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      setTimeout(() => {
+        window.location.href = data.intents.generic;
+      }, 400);
+    }
+
+  } catch (err) {
+    console.error('UPI init error:', err);
+    alert('Network error while initiating UPI payment. Please try again.');
+  } finally {
+    payBtn.disabled = false;
+    payBtn.innerHTML = `<span>⚡</span><span>Pay ₹${Math.round(currentAmount).toLocaleString('en-IN')} via UPI</span>`;
+  }
+}
+
+function trackAppLaunch(appName) {
+  document.getElementById('upiPollingText').textContent = `Opened in ${appName}... Enter PIN in app.`;
+}
+
+function closeUPIModal() {
+  if (pollTimer) clearInterval(pollTimer);
+  document.getElementById('upiIntentModal').style.display = 'none';
+}
+
+// 2. Instant Polling Script: checks order status every 1.5 seconds
+function startPolling(orderId) {
+  if (pollTimer) clearInterval(pollTimer);
+
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/upi/check-status/${orderId}?uid={{ user.id }}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.status === 'PAID') {
+        clearInterval(pollTimer);
+        onPaymentSuccess(data);
+      }
+    } catch (e) {
+      console.warn('Poll tick error:', e);
+    }
+  }, 1500);
+}
+
+// 3. Simulated PIN Entry (Test Mode / Webhook callback)
+async function simulateUPIPINSuccess() {
+  if (!activeOrderId) return;
+  const btn = document.getElementById('simulateWebhookBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Authorizing PIN & executing webhook...';
+
+  try {
+    const res = await fetch('/api/upi/simulate-paid?uid={{ user.id }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: activeOrderId,
+        upi_app: 'Google Pay',
+        uid: "{{ user.id }}"
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      // The polling script will catch it instantly, or we can trigger handler directly
+      onPaymentSuccess(data);
+    }
+  } catch (e) {
+    console.error('Simulation error:', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🧪 [TEST MODE] Simulate Entering UPI PIN & App Return';
+  }
+}
+
+// 4. Success state & smooth transition to receipt
+function onPaymentSuccess(data) {
+  if (pollTimer) clearInterval(pollTimer);
+  document.getElementById('upiIntentModal').style.display = 'none';
+
+  const overlay = document.getElementById('paymentSuccessOverlay');
+  document.getElementById('successTxnId').textContent = data.transaction_id || 'TRIC-TXN-SUCCESS';
+  overlay.style.display = 'flex';
+
+  setTimeout(() => {
+    let redirectUrl = data.redirect_url;
+    if (!redirectUrl.includes('uid=')) {
+      redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + 'uid={{ user.id }}';
+    }
+    window.location.href = redirectUrl;
+  }, 1200);
+}
+</script>
+{% endblock %}

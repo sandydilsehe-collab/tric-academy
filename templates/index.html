@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}TRIC Academy – School of Swimming | Tirupur{% endblock %}
+{% block nav_class %}nav-dark{% endblock %}
+
+{% block content %}
+<!-- Fixed Full-Screen Background Image of the Pool -->
+<div class="pool-hero-bg"></div>
+
+<!-- Hero Section with Scrim Overlay -->
+<section style="min-height: 85vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4rem 1.5rem; color: #FFFFFF;">
+  <div style="max-width: 880px; margin: 0 auto;">
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(31, 138, 138, 0.25); border: 1px solid rgba(45, 212, 191, 0.4); padding: 0.35rem 1rem; border-radius: 9999px; margin-bottom: 1.5rem; backdrop-filter: blur(4px);">
+      <span style="color: #5EEAD4; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Official Swimming Academy · Tirupur</span>
+    </div>
+    <h1 style="font-size: clamp(2.5rem, 5vw, 4.25rem); font-weight: 800; line-height: 1.1; margin-bottom: 1.25rem; color: #FFFFFF; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+      TRIC ACADEMY
+      <span style="display: block; font-size: clamp(1.25rem, 2.5vw, 2rem); font-weight: 600; color: #38BDF8; letter-spacing: 0.05em; margin-top: 0.5rem;">
+        SCHOOL OF SWIMMING
+      </span>
+    </h1>
+    <p style="font-size: 1.15rem; line-height: 1.7; color: #E2E8F0; max-width: 680px; margin: 0 auto 2.5rem; text-shadow: 0 1px 4px rgba(0,0,0,0.4);">
+      Master swimming with certified coaches in clean, hygienic Olympic-standard waters. Structured training from beginner Learn-to-Swim to advanced competitive race disciplines.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      {% if current_user %}
+        <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 14px rgba(31, 138, 138, 0.5);">
+          🏊 Go to My Dashboard ({{ current_user.name.split()[0] }}) →
+        </a>
+        {% if current_user.role == 'member' %}
+          <a href="{{ url_for('renew_membership') }}" class="btn btn-secondary btn-lg">
+            ⚡ Renew Pass
+          </a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-white btn-lg" style="background: rgba(239, 68, 68, 0.3); border-color: #EF4444;">
+          🚪 Log Out
+        </a>
+      {% else %}
+        <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 14px rgba(31, 138, 138, 0.5);">
+          Apply for Entry Pass
+        </a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary btn-lg">
+          Member Login
+        </a>
+      {% endif %}
+      <a href="#batches" class="btn btn-outline-white btn-lg">
+        View Batch Timings
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Content Wrapper over Light Canvas -->
+<div style="background-color: #FFFFFF; position: relative; z-index: 10; border-top: 1px solid var(--border-hairline);">
+
+  <!-- Section 1: About the Academy -->
+  <section id="about" class="container" style="padding-top: 5rem; padding-bottom: 4rem;">
+    <div style="text-align: center; max-width: 760px; margin: 0 auto 3.5rem;">
+      <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">About Our Academy</span>
+      <h2 style="font-size: 2.25rem; margin-top: 0.5rem; margin-bottom: 1rem;">Nurturing Swimmers with Discipline & Safety</h2>
+      <p style="color: var(--text-muted); font-size: 1.05rem;">
+        Established in Velampalayam, Tirupur, TRIC Academy operates with rigorous adherence to water safety, personal hygiene, and modern stroke mechanics under qualified coaches.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div class="card" style="border-top: 3px solid var(--brand-primary);">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Learn to Swim Program</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          Beginner-friendly curriculum covering water comfort, buoyancy, breathing techniques, and fundamental strokes (Freestyle, Backstroke) in safe, supervised shallow-to-deep lanes.
+        </p>
+      </div>
+
+      <div class="card" style="border-top: 3px solid var(--brand-accent);">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Elite Competition Batch</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          High-performance squad training for district, state, and national meets. Dedicated race timing tracking, stroke analysis, split pacing, and endurance conditioning.
+        </p>
+      </div>
+
+      <div class="card" style="border-top: 3px solid var(--brand-gold);">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Strict Hygiene & 32 Rules</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          Daily water filtration, compulsory shower & swim caps, medical screening, and 32 enforced pool regulations ensure a clean and protective environment for every swimmer.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Batch Timings -->
+  <section id="batches" style="background-color: var(--surface-subtle); padding: 5rem 0;">
+    <div class="container">
+      <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem;">
+        <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Schedule & Batches</span>
+        <h2 style="font-size: 2.25rem; margin-top: 0.5rem; margin-bottom: 0.75rem;">Convenient Daily Training Batches</h2>
+        <p style="color: var(--text-muted);">Structured batches tailored to skill level and age group, keeping lane congestion low.</p>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Batch Name</th>
+              <th>Timings</th>
+              <th>Assigned Coach</th>
+              <th>Batch Type</th>
+              <th>Capacity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in batches %}
+            <tr>
+              <td style="font-weight: 700;">{{ b.name }}</td>
+              <td class="font-mono">{{ b.timing_desc }}</td>
+              <td>{{ b.coach_name or 'Head Coach' }}</td>
+              <td>
+                {% if b.is_competition %}
+                  <span class="status-badge status-competition">Competitive Squad</span>
+                {% else %}
+                  <span class="status-badge status-active">General Training</span>
+                {% endif %}
+              </td>
+              <td class="font-mono">{{ b.max_capacity }} Swimmers</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Membership Fees -->
+  <section id="fees" class="container" style="padding: 5rem 1.5rem;">
+    <div style="text-align: center; max-width: 720px; margin: 0 auto 3.5rem;">
+      <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Transparent Pricing</span>
+      <h2 style="font-size: 2.25rem; margin-top: 0.5rem; margin-bottom: 0.75rem;">Membership Plans</h2>
+      <p style="color: var(--text-muted);">Choose between monthly and quarterly passes. Identity card issued on approval.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 820px; margin: 0 auto;">
+      {% for p in plans %}
+      <div class="card" style="text-align: center; padding: 2.5rem 2rem; position: relative; {% if p.name == 'Quarterly' %}border: 2px solid var(--brand-primary);{% endif %}">
+        {% if p.name == 'Quarterly' %}
+        <div style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--brand-primary); color: #fff; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 2px 12px; border-radius: 9999px;">
+          Best Value (90 Days)
+        </div>
+        {% endif %}
+        <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">{{ p.name }} Pass</h3>
+        <div style="font-size: 2.75rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--brand-primary); margin: 1rem 0;">
+          ₹{{ '{:,.0f}'.format(p.fee_amount) }}
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem;">
+          Valid for {{ p.duration_days }} continuous calendar days. {{ p.description or '' }}
+        </p>
+        <ul style="list-style: none; text-align: left; font-size: 0.9rem; color: var(--text-main); margin-bottom: 2rem; line-height: 2;">
+          <li>✓ Daily allocated batch slot</li>
+          <li>✓ Certified coach supervision</li>
+          <li>✓ Official academy photo ID card</li>
+          <li>✓ Locker & changing room access</li>
+        </ul>
+        {% if current_user and current_user.role == 'member' %}
+          <a href="{{ url_for('renew_membership') }}" class="btn btn-primary" style="width: 100%;">
+            ⚡ Renew / Select Pass
+          </a>
+        {% elif not current_user %}
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary" style="width: 100%;">
+            Apply for this Pass
+          </a>
+        {% else %}
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary" style="width: 100%;">
+            Admin Hub
+          </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+      * Note: One-time ₹50 Identity Card fee applies upon physical card issuance at the office.
+    </div>
+  </section>
+
+  <!-- Section 3.5: Member & Parent Testimonials -->
+  <section id="testimonials" style="background-color: var(--surface-subtle); padding: 5rem 0; border-top: 1px solid var(--border-hairline); border-bottom: 1px solid var(--border-hairline);">
+    <div class="container">
+      <div style="text-align: center; max-width: 760px; margin: 0 auto 3rem;">
+        <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Swimmer &amp; Parent Stories</span>
+        <h2 style="font-size: 2.25rem; margin-top: 0.5rem; margin-bottom: 0.75rem;">Trusted by Hundreds of Swimmers in Tirupur</h2>
+        <p style="color: var(--text-muted); font-size: 1.05rem;">
+          Real feedback from beginners gaining water confidence, competitive athletes winning podium medals, and daily fitness enthusiasts.
+        </p>
+      </div>
+
+      <!-- Testimonial Highlight Metrics -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 3rem;">
+        <div style="background: #FFFFFF; border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="color: #F59E0B; font-size: 1.25rem; font-weight: 800; margin-bottom: 2px;">★ 4.9 / 5.0</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Average Swimmer Rating</div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="color: var(--brand-primary); font-size: 1.25rem; font-weight: 800; margin-bottom: 2px;">250+</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Annual Members</div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="color: var(--brand-accent); font-size: 1.25rem; font-weight: 800; margin-bottom: 2px;">100%</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Daily Filtration &amp; Hygiene</div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid var(--border-hairline); border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="color: var(--success); font-size: 1.25rem; font-weight: 800; margin-bottom: 2px;">1:8 Ratio</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Coach-to-Swimmer Attention</div>
+        </div>
+      </div>
+
+      <!-- Testimonial Cards Grid -->
+      <div class="testimonial-grid">
+        <!-- Review 1 -->
+        <div class="testimonial-card">
+          <div>
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-quote">
+              “My 8-year-old daughter joined the beginner batch terrified of water. Within just three weeks under Coach Shiva, she gained complete water confidence and is now swimming freestyle independently. The pool hygiene and strict cap/shower protocols give us immense peace of mind.”
+            </p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">RM</div>
+            <div class="testimonial-meta">
+              <strong>R. Meenakshi</strong>
+              <span>Parent of Ananya (Age 8)</span>
+              <span class="testimonial-badge">Batch B1 · Learn to Swim</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review 2 -->
+        <div class="testimonial-card">
+          <div>
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-quote">
+              “Training with TRIC Academy’s elite competition squad transformed my race pacing. The coaches track our lap splits and 50m/100m timings digitally, which helped me shave 2.4 seconds off my 100m Butterfly PB at the District Aquatic Championship.”
+            </p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background: linear-gradient(135deg, #0284C7, #0369A1);">KR</div>
+            <div class="testimonial-meta">
+              <strong>Karthik Raja</strong>
+              <span>State-Level Competitive Swimmer</span>
+              <span class="testimonial-badge" style="color: var(--brand-accent); background: rgba(2, 132, 199, 0.1);">Competition Squad</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review 3 -->
+        <div class="testimonial-card">
+          <div>
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-quote">
+              “As a textile exporter in Tirupur, the 6:00 AM batch is the best part of my routine. Clean, chlorinated water, properly marked lanes, and dedicated locker facilities make it a world-class training center right here in Velampalayam.”
+            </p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background: linear-gradient(135deg, #15803D, #16A34A);">SS</div>
+            <div class="testimonial-meta">
+              <strong>S. Soundararajan</strong>
+              <span>Textile Exporter &amp; Fitness Swimmer</span>
+              <span class="testimonial-badge" style="color: var(--success); background: rgba(21, 128, 61, 0.1);">Morning Fitness Pass</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review 4 -->
+        <div class="testimonial-card">
+          <div>
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-quote">
+              “The coaching staff are exceptionally patient with children. The structured progression from shallow water orientation to deep lane survival is textbook quality. The digital identity card and batch attendance make drop-off transparent and secure.”
+            </p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background: linear-gradient(135deg, #D97706, #B45309);">VK</div>
+            <div class="testimonial-meta">
+              <strong>Dr. V. Kavitha</strong>
+              <span>Parent of Dhruv (Age 11)</span>
+              <span class="testimonial-badge" style="color: var(--brand-gold); background: rgba(217, 119, 6, 0.1);">Summer Cadet Program</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Callout & Quick Action Buttons -->
+      <div style="text-align: center; margin-top: 2.5rem;">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          Ready to join TRIC Academy? Start your journey today or sign in to your swimmer account.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 14px rgba(31, 138, 138, 0.4); font-weight: 700;">
+            🏊 Apply for Entry Pass
+          </a>
+          {% if current_user %}
+            <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-lg" style="background: #FFFFFF; font-weight: 700;">
+              Portal Dashboard →
+            </a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-secondary btn-lg" style="background: #FFFFFF; font-weight: 700;">
+              🔑 Member / Admin Login
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Rules & Regulations Preview -->
+  <section style="background-color: #0F172A; color: #FFFFFF; padding: 4.5rem 1.5rem;">
+    <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+      <div style="max-width: 680px;">
+        <span style="color: #38BDF8; font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Safety & Pool Protocol</span>
+        <h2 style="font-size: 2rem; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 1rem;">Pool Rules &amp; Regulations</h2>
+        <p style="color: #94A3B8; font-size: 1rem; line-height: 1.6;">
+          TRIC Academy enforces strict adherence to all official pool guidelines—including mandatory swimming caps, no oils/soaps, medical declarations, and coach-authorized diving board usage.
+        </p>
+      </div>
+      <div>
+        <a href="{{ url_for('rules') }}" class="btn btn-primary btn-lg">
+          Read Pool Rules &amp; Safety
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Contact Details -->
+  <section id="contact" class="container" style="padding: 5rem 1.5rem;">
+    <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem;">
+      <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;">Get in Touch</span>
+      <h2 style="font-size: 2.25rem; margin-top: 0.5rem; margin-bottom: 0.75rem;">Contact & Location</h2>
+      <p style="color: var(--text-muted);">Visit our academy office in Velampalayam for physical document verification and pass collection.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+      <div class="card">
+        <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Campus Address</h4>
+        <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.6;">
+          <strong>TRIC Academy</strong><br>
+          85/5, Kaliamman Kovil Street,<br>
+          #5 Velampalayam,<br>
+          Tirupur - 641 652, Tamil Nadu, India.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Direct Phone Lines</h4>
+        <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.8;">
+          <a href="tel:+919894777333" style="color: inherit; text-decoration: none;">+91-9894777333</a><br>
+          <a href="tel:+919894730333" style="color: inherit; text-decoration: none;">+91-9894730333</a><br>
+          <a href="tel:+919894757333" style="color: inherit; text-decoration: none;">+91-9894757333</a>
+        </p>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Online & Correspondence</h4>
+        <p style="color: var(--text-muted); font-size: 0.925rem; line-height: 1.8;">
+          Email: <a href="mailto:goodwillshiva@gmail.com" style="color: var(--brand-primary);">goodwillshiva@gmail.com</a><br>
+          Web: <a href="http://www.tricacademy.com" target="_blank" style="color: var(--brand-primary);">www.tricacademy.com</a><br>
+          Hours: Mon – Sun: 5:30 AM – 8:30 PM
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

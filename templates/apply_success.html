@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Application Submitted – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; padding-top: 4rem; padding-bottom: 5rem;">
+  <div class="card" style="text-align: center; padding: 3rem 2rem;">
+    <div style="width: 64px; height: 64px; background-color: #DCFCE7; color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem;">
+      ✓
+    </div>
+
+    <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em;">
+      Application Received
+    </span>
+    <h1 style="font-size: 1.85rem; margin-top: 0.25rem; margin-bottom: 0.75rem;">
+      Thank you, {{ name }}!
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem;">
+      Your application for the TRIC Academy Entry Pass has been registered. Your phone number has been verified via OTP.
+    </p>
+
+    <!-- Application Number Card -->
+    <div style="background-color: var(--surface-subtle); border: 1.5px dashed var(--brand-primary); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 2rem;">
+      <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
+        Official Application Number
+      </span>
+      <div class="font-mono" style="font-size: 1.75rem; font-weight: 800; color: var(--brand-primary); margin-top: 0.25rem;">
+        {{ app_no }}
+      </div>
+    </div>
+
+    <!-- Email Verification Simulation Callout -->
+    <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 1.25rem; text-align: left; margin-bottom: 2rem;">
+      <h4 style="font-size: 0.9rem; color: #1E40AF; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>📧</span> Email Verification Link (Testing Environment)
+      </h4>
+      <p style="font-size: 0.85rem; color: #1E3A8A; line-height: 1.5; margin-bottom: 0.75rem;">
+        In a production environment, this link is emailed to <strong>{{ email }}</strong>. On localhost, click the button below to verify your email immediately:
+      </p>
+      <a href="{{ url_for('verify_email', token=email_token) }}" class="btn btn-primary btn-sm">
+        Confirm Email Address Now
+      </a>
+    </div>
+
+    <!-- SQLite DB Confirmation Badge -->
+    <div style="background-color: #ECFDF5; border: 1.5px solid #10B981; border-radius: var(--radius-sm); padding: 1rem 1.25rem; margin-bottom: 1.75rem; text-align: left;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; color: #065F46; font-weight: 700; font-size: 0.9rem;">
+        <span>✓</span> SQLite Database Entry Confirmed
+      </div>
+      <p style="font-size: 0.8rem; color: #047857; margin-top: 0.25rem; margin-bottom: 0;">
+        Your record has been successfully inserted and committed to <code>tric.db</code> (Users Table ID #<strong>{{ user_id }}</strong>).
+      </p>
+    </div>
+
+    <!-- Required Documents at Office -->
+    <div style="text-align: left; border-top: 1px solid var(--border-hairline); padding-top: 1.5rem; margin-bottom: 2rem;">
+      <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; color: var(--text-main);">
+        Next Step: Office Document Verification
+      </h4>
+      <ul style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.8; padding-left: 1.25rem;">
+        <li>Produce 2 passport-size photographs at the TRIC Academy office.</li>
+        <li>Produce residential/identity proof and Date of Birth certificate.</li>
+        <li>If age > 50, produce medical fitness certificate from an authorized medical practitioner.</li>
+        <li>Pay ₹50 Identity Card issuance fee.</li>
+        <li>Once approved, you have full access to batch attendance and renewals.</li>
+      </ul>
+    </div>
+
+    <!-- Direct Action Buttons for Localhost Testing -->
+    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('member_dashboard', uid=user_id) }}" class="btn btn-primary" style="background-color: var(--brand-primary); font-weight: 700; padding: 0.65rem 1.5rem; box-shadow: 0 4px 12px rgba(31, 138, 138, 0.35);">
+        🚀 Enter Member Portal Now
+      </a>
+      {% if user_id %}
+      <a href="{{ url_for('quick_approve_member', user_id=user_id) }}" class="btn btn-secondary" style="border-color: #10B981; color: #047857;">
+        ⚡ 1-Click Activate Pass
+      </a>
+      {% endif %}
+      <a href="{{ url_for('login') }}" class="btn btn-secondary">
+        Go to Login
+      </a>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        Home
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,523 @@
+/* Paper Application Form Styling - TRIC Academy */
+
+.paper-sheet-wrapper {
+  max-width: 860px;
+  width: 100%;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-primary, #1F8A8A) #F1F5F9;
+}
+
+.paper-sheet-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.paper-sheet-wrapper::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 4px;
+}
+
+.paper-sheet-wrapper::-webkit-scrollbar-thumb {
+  background: var(--brand-primary, #1F8A8A);
+  border-radius: 4px;
+}
+
+.paper-sheet-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #135B5B;
+}
+
+.paper-sheet {
+  background-color: #FFFFFF;
+  color: #111827;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #D1D5DB;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  position: relative;
+}
+
+/* Printable Official Header Banner */
+.paper-header-banner {
+  background-color: var(--brand-primary, #1F8A8A);
+  color: #FFFFFF;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 2px;
+}
+
+.paper-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.paper-logo {
+  width: 58px;
+  height: 58px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  padding: 2px;
+  object-fit: cover;
+}
+
+.paper-banner-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+.paper-banner-sub {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: right;
+  text-transform: uppercase;
+  color: #E6FFFA;
+}
+
+/* Sheet Top Subheader: SWIMMING & Form Subtitle */
+.paper-subheader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.paper-title-group {
+  flex: 1;
+  text-align: center;
+}
+
+.paper-title-main {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #111827;
+}
+
+.paper-title-sub {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #1F2937;
+  text-transform: uppercase;
+}
+
+.paper-meta-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.825rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.meta-field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-field-row span {
+  width: 42px;
+  text-transform: uppercase;
+}
+
+.meta-input-line {
+  border-bottom: 1px dotted #374151;
+  min-width: 130px;
+  padding: 0 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+/* Main Bordered Section */
+.paper-main-box {
+  border: 1.5px solid #1F2937;
+  padding: 1rem 1.25rem;
+  position: relative;
+  background-color: #FFFFFF;
+}
+
+/* Passport Size Photo Frame */
+.photo-slot-container {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 120px;
+  height: 145px;
+  border: 1.5px dashed #4B5563;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  background-color: #F9FAFB;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+  z-index: 5;
+}
+
+.photo-slot-container:hover {
+  border-color: var(--brand-primary);
+  background-color: #F0FDFA;
+}
+
+.photo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-slot-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #4B5563;
+  text-transform: uppercase;
+  line-height: 1.2;
+  padding: 0.25rem;
+}
+
+/* Two-Column Rows */
+.paper-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: calc(100% - 135px); /* Leave room for photo frame */
+}
+
+.paper-rows-list.full-width-below {
+  max-width: 100%;
+  margin-top: 0.65rem;
+}
+
+.paper-row {
+  display: flex;
+  align-items: flex-start;
+  font-size: 0.825rem;
+  line-height: 1.4;
+}
+
+.paper-label {
+  width: 210px;
+  flex-shrink: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #1F2937;
+  display: flex;
+  justify-content: space-between;
+  padding-right: 0.75rem;
+}
+
+.paper-label::after {
+  content: ':';
+}
+
+.paper-input-wrap {
+  flex: 1;
+}
+
+.paper-line-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px dotted #4B5563;
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #111827;
+  background: transparent;
+  outline: none;
+}
+
+.paper-line-input:focus {
+  border-bottom: 1.5px solid var(--brand-primary);
+}
+
+.paper-multiline-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px dotted #4B5563;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+}
+
+/* Dob & Age Digit Boxes */
+.dob-age-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.age-box-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.age-display-box {
+  width: 44px;
+  height: 28px;
+  border: 1px solid #1F2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background-color: #FFFFFF;
+}
+
+.digit-boxes-container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.digit-box {
+  width: 22px;
+  height: 28px;
+  border: 1px solid #1F2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background-color: #FFFFFF;
+}
+
+.digit-box-sep {
+  width: 6px;
+}
+
+/* Radio & Checkbox Elements */
+.paper-choice-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.paper-choice-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Health Declaration Notice */
+.health-note-banner {
+  margin-top: 0.4rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #B91C1C;
+  line-height: 1.3;
+}
+
+/* Declaration Section */
+.paper-declaration-box {
+  border-top: 1.5px solid #1F2937;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+}
+
+.declaration-badge {
+  background-color: #111827;
+  color: #FFFFFF;
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.declaration-text {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #1F2937;
+  margin-bottom: 0.75rem;
+}
+
+.declaration-signature-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  align-items: flex-end;
+}
+
+.signature-field-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+  color: #374151;
+}
+
+/* For Office Use Section */
+.office-use-box {
+  margin-top: 1.25rem;
+  border: 1.5px solid #1F2937;
+  background-color: #FAFAFA;
+  padding: 0.85rem 1.15rem;
+  position: relative;
+}
+
+.office-use-badge {
+  background-color: #1F2937;
+  color: #FFFFFF;
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.65rem;
+}
+
+.office-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+  font-size: 0.825rem;
+}
+
+.office-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.office-field-label {
+  font-weight: 700;
+  color: #1F2937;
+  white-space: nowrap;
+}
+
+/* Paper Footer */
+.paper-footer {
+  margin-top: 1.25rem;
+  border-top: 1.5px solid #1F2937;
+  padding-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 1fr;
+  gap: 1rem;
+  font-size: 0.725rem;
+  color: #1F2937;
+  line-height: 1.4;
+}
+
+.paper-footer-left strong {
+  font-size: 0.8rem;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Form Action Bar */
+.form-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .paper-sheet {
+    padding: 1rem;
+  }
+  .paper-header-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  .paper-banner-left {
+    flex-direction: column;
+  }
+  .paper-banner-title {
+    font-size: 1.4rem;
+  }
+  .photo-slot-container {
+    position: static;
+    margin: 0 auto 1rem;
+    width: 110px;
+    height: 135px;
+  }
+  .paper-rows-list {
+    max-width: 100%;
+  }
+  .paper-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .paper-label {
+    width: 100%;
+  }
+  .declaration-signature-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .office-grid {
+    grid-template-columns: 1fr;
+  }
+  .paper-footer {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+/* Exact Print Replica Stylesheet */
+@media print {
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+  .top-navbar, .site-footer, .form-action-bar, .no-print, .flash-container {
+    display: none !important;
+  }
+  .paper-sheet-wrapper {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .paper-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .paper-header-banner {
+    background-color: #1F8A8A !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .declaration-badge, .office-use-badge {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

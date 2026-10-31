@@ -1,0 +1,679 @@
+{% extends "base.html" %}
+
+{% block title %}Competition Swimmer Hub – TRIC Academy{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js for Competition Analytics & Performance Graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  .comp-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .comp-stat-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .comp-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  }
+  .comp-graphs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (min-width: 900px) {
+    .comp-graphs-grid {
+      grid-template-columns: 1.6fr 1fr;
+    }
+  }
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border-hairline);
+    background: #FFFFFF;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+  }
+  .filter-pill.active, .filter-pill:hover {
+    background: var(--brand-primary);
+    color: #FFFFFF;
+    border-color: var(--brand-primary);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+
+  <!-- Navigation Bar: Back Button & Breadcrumbs -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      {% if user.role == 'member' %}
+        <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Member Dashboard
+        </a>
+      {% elif user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Admin Hub
+        </a>
+      {% else %}
+        <a href="{{ url_for('attendance_tool') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Attendance Deck
+        </a>
+      {% endif %}
+      <div style="font-size: 0.8rem; color: var(--text-muted); display: none; align-items: center; gap: 0.35rem;" class="breadcrumb-trail">
+        <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none;">Home</a>
+        <span>/</span>
+        <a href="{{ url_for('member_dashboard') if user.role == 'member' else url_for('admin_dashboard') }}" style="color: var(--text-muted); text-decoration: none;">Portal</a>
+        <span>/</span>
+        <span style="color: var(--brand-primary); font-weight: 700;">Competition Hub</span>
+      </div>
+    </div>
+
+    <!-- Coach/Admin Swimmer Switcher & Actions -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      {% if user.role in ('admin', 'coach') and swimmers_list %}
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="swimmerSelect" style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Select Swimmer:</label>
+        <select id="swimmerSelect" class="form-control" style="width: auto; min-width: 200px; padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="window.location.href='{{ url_for('competition_hub') }}?swimmer_id=' + this.value">
+          {% for s in swimmers_list %}
+          <option value="{{ s.id }}" {% if s.id == swimmer.id %}selected{% endif %}>
+            {{ s.name }} ({{ s.id_card_number or s.app_no }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+        🚪 Log Out
+      </a>
+    </div>
+  </div>
+
+  <!-- Swimmer Profile Banner -->
+  <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: #FFFFFF; border: none; padding: 1.75rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <div style="width: 76px; height: 76px; border-radius: 50%; border: 3px solid #38BDF8; overflow: hidden; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+          {% if swimmer.photo_filename %}
+            <img src="{{ url_for('serve_upload', category='photos', filename=swimmer.photo_filename) }}" alt="{{ swimmer.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+          {% else %}
+            🏊
+          {% endif %}
+        </div>
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 0.4rem; color: #38BDF8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">
+            <span>🏆 Official Competitor</span>
+            <span>·</span>
+            <span>State &amp; District Squad</span>
+          </div>
+          <h2 style="font-size: 1.75rem; color: #FFFFFF; margin: 0 0 0.35rem 0;">{{ swimmer.name }}</h2>
+          <div style="font-size: 0.85rem; color: #94A3B8; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <span>App No: <strong style="color: #FFFFFF;" class="font-mono">{{ swimmer.app_no }}</strong></span>
+            <span>Age: <strong style="color: #FFFFFF;">{{ swimmer.age or '--' }} Yrs</strong></span>
+            <span>ID Card: <strong style="color: #38BDF8;" class="font-mono">{{ swimmer.id_card_number or 'TRIC-SWIM' }}</strong></span>
+            <span>Batch: <strong style="color: #34D399;">Competition Squad</strong></span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+        <span class="status-badge" style="background: rgba(56, 189, 248, 0.2); color: #38BDF8; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 800; border: 1px solid rgba(56, 189, 248, 0.4);">
+          ★ Active Racing License
+        </span>
+        <div style="font-size: 0.75rem; color: #94A3B8;">
+          Assigned Coach: <strong style="color: #FFFFFF;">Coach Shiva</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competition Completion Statistics KPI Grid -->
+  <div class="comp-stat-grid">
+    <!-- Stat 1: Total Races Completed -->
+    <div class="comp-stat-card" style="border-left: 4px solid var(--brand-primary);">
+      <div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+          Races Completed
+        </span>
+        <div class="font-mono" style="font-size: 2rem; font-weight: 800; color: var(--brand-primary); line-height: 1;">
+          {{ comp_stats.total_races }}
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
+        <span>🏁</span>
+        <span>Across official championships</span>
+      </div>
+    </div>
+
+    <!-- Stat 2: Total Competitive Distance Swum -->
+    <div class="comp-stat-card" style="border-left: 4px solid #0284C7;">
+      <div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+          Competitive Distance
+        </span>
+        <div class="font-mono" style="font-size: 2rem; font-weight: 800; color: #0284C7; line-height: 1;">
+          {{ comp_stats.total_distance_m }}m
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
+        <span>🏊</span>
+        <span>Racing meters logged in meets</span>
+      </div>
+    </div>
+
+    <!-- Stat 3: Medal & Podium Tally -->
+    <div class="comp-stat-card" style="border-left: 4px solid #D97706;">
+      <div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+          Medals &amp; Podiums
+        </span>
+        <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #D97706; line-height: 1.2;">
+          🥇 {{ comp_stats.gold_count }} &nbsp;🥈 {{ comp_stats.silver_count }} &nbsp;🥉 {{ comp_stats.bronze_count }}
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: #B45309; margin-top: 0.75rem; font-weight: 700;">
+        {{ comp_stats.podium_pct }}% Podium Finish Rate
+      </div>
+    </div>
+
+    <!-- Stat 4: Personal Bests Count -->
+    <div class="comp-stat-card" style="border-left: 4px solid #10B981;">
+      <div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+          Personal Bests (PB)
+        </span>
+        <div class="font-mono" style="font-size: 2rem; font-weight: 800; color: #10B981; line-height: 1;">
+          {{ comp_stats.pb_count }}
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
+        <span>🌟</span>
+        <span>Record-breaking milestones</span>
+      </div>
+    </div>
+
+    <!-- Stat 5: Top Speed Velocity -->
+    <div class="comp-stat-card" style="border-left: 4px solid #8B5CF6;">
+      <div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+          Top Sprint Velocity
+        </span>
+        <div class="font-mono" style="font-size: 2rem; font-weight: 800; color: #8B5CF6; line-height: 1;">
+          {{ comp_stats.top_velocity_mps }} <span style="font-size: 1rem; font-weight: 600;">m/s</span>
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
+        <span>⚡</span>
+        <span>Peak competitive velocity</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Graphs Grid (Suite of 4 Visualizations) -->
+  <div class="comp-graphs-grid">
+    
+    <!-- Graph 1: Race Time Progression Timeline (Chart.js Line) -->
+    <div class="card" style="padding: 1.5rem;">
+      <div class="card-header" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem;">
+        <div>
+          <h3 class="card-title" style="font-size: 1.15rem;">📈 Race Time Progression Over Meets</h3>
+          <span style="font-size: 0.775rem; color: var(--text-muted);">Downward curve indicates faster official swim times</span>
+        </div>
+        <span class="font-mono" style="font-size: 0.75rem; background: #F1F5F9; padding: 3px 8px; border-radius: 4px; color: var(--brand-primary); font-weight: 700;">
+          Timeline
+        </span>
+      </div>
+      <div style="height: 320px; position: relative;">
+        <canvas id="progressionLineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Graph 2: Stroke Mastery & Race Distribution (Chart.js Doughnut) -->
+    <div class="card" style="padding: 1.5rem;">
+      <div class="card-header" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem;">
+        <div>
+          <h3 class="card-title" style="font-size: 1.15rem;">🏊 Stroke Specialization</h3>
+          <span style="font-size: 0.775rem; color: var(--text-muted);">Event participation breakdown by discipline</span>
+        </div>
+      </div>
+      <div style="height: 320px; position: relative; display: flex; align-items: center; justify-content: center;">
+        <canvas id="strokeDoughnutChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Second Row of Graphs: Velocity & Podium Tally -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.75rem; margin-bottom: 2.5rem;">
+    
+    <!-- Graph 3: Average Swim Velocity by Event Distance (Bar Chart) -->
+    <div class="card" style="padding: 1.5rem;">
+      <div class="card-header" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem;">
+        <div>
+          <h3 class="card-title" style="font-size: 1.15rem;">⚡ Speed Velocity by Distance (m/s)</h3>
+          <span style="font-size: 0.775rem; color: var(--text-muted);">Higher bars indicate greater sprint &amp; pace speed</span>
+        </div>
+      </div>
+      <div style="height: 260px; position: relative;">
+        <canvas id="velocityBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Graph 4: Finishing Position Distribution (Polar/Doughnut Chart) -->
+    <div class="card" style="padding: 1.5rem;">
+      <div class="card-header" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem;">
+        <div>
+          <h3 class="card-title" style="font-size: 1.15rem;">🏆 Podium &amp; Rank Breakdown</h3>
+          <span style="font-size: 0.775rem; color: var(--text-muted);">Podium placements vs top 5 finishes</span>
+        </div>
+      </div>
+      <div style="height: 260px; position: relative; display: flex; align-items: center; justify-content: center;">
+        <canvas id="podiumDoughnutChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Personal Bests Showcase Grid -->
+  <div style="margin-bottom: 2.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h3 style="font-size: 1.25rem; margin: 0;">Personal Bests Showcase (PB Records)</h3>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Officially certified meet timings</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+      {% if pbs %}
+        {% for pb in pbs %}
+        <div class="stat-box" style="border-left: 4px solid var(--brand-accent); background: #FFFFFF; padding: 1.15rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-hairline); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span class="stat-label" style="font-size: 0.8rem; font-weight: 800; color: var(--brand-primary); text-transform: uppercase;">
+              {{ pb.distance }} {{ pb.stroke|replace('_', ' ')|upper }}
+            </span>
+            <span style="background-color: #FEF3C7; color: #92400E; font-size: 0.65rem; font-weight: 800; padding: 2px 5px; border-radius: 4px;">
+              ★ PB
+            </span>
+          </div>
+          <div class="stat-value font-mono" style="color: var(--brand-accent); font-size: 1.85rem; font-weight: 800; line-height: 1.2;">
+            {{ pb.time_display }}
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ pb.meet_name }}">
+            {{ pb.meet_name }}
+          </div>
+          <div class="font-mono" style="font-size: 0.7rem; color: #94A3B8; margin-top: 2px;">
+            {{ pb.meet_date }}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="card" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">
+          No race personal bests logged yet for this swimmer.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Log Race Record Form (For Coaches & Admins) -->
+  {% if user.role in ('admin', 'coach') %}
+  <div class="card" style="margin-bottom: 2.5rem; border: 1.5px solid var(--brand-primary); background-color: #F8FAFC;">
+    <div class="card-header" style="border-color: #E2E8F0;">
+      <h3 class="card-title" style="color: var(--brand-primary);">+ Log Official Race Record</h3>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Adding entry for {{ swimmer.name }}</span>
+    </div>
+
+    <form action="{{ url_for('add_race_record') }}" method="POST" style="padding: 1.5rem;">
+      <input type="hidden" name="swimmer_id" value="{{ swimmer.id }}">
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Meet / Event Name</label>
+          <input type="text" name="meet_name" class="form-control" placeholder="e.g. State Aquatic Championship, Chennai" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Event Date</label>
+          <input type="date" name="meet_date" class="form-control" value="{{ now.strftime('%Y-%m-%d') }}" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Discipline / Stroke</label>
+          <select name="stroke" class="form-control" required>
+            <option value="freestyle">Freestyle</option>
+            <option value="backstroke">Backstroke</option>
+            <option value="breaststroke">Breaststroke</option>
+            <option value="butterfly">Butterfly</option>
+            <option value="individual_medley">Individual Medley (IM)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Distance</label>
+          <select name="distance" class="form-control" required>
+            <option value="50m">50m</option>
+            <option value="100m">100m</option>
+            <option value="200m">200m</option>
+            <option value="400m">400m</option>
+            <option value="800m">800m</option>
+            <option value="1500m">1500m</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Minutes</label>
+          <input type="number" name="minutes" class="form-control font-mono" value="0" min="0" max="59">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Seconds.Hundredths</label>
+          <input type="number" name="seconds" step="0.01" class="form-control font-mono" placeholder="25.40" required min="0" max="59.99">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Position / Rank</label>
+          <input type="number" name="position" class="form-control font-mono" placeholder="1st, 2nd, 3rd..." min="1">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0; grid-column: span 2;">
+          <label class="form-label">Coach Notes / Technical Feedback</label>
+          <input type="text" name="notes" class="form-control" placeholder="e.g. Excellent breakout underwater, crisp turns">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+        <button type="submit" class="btn btn-primary" style="font-weight: 700;">
+          ✓ Save Official Race Record
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- Complete Race History Log with Live Stroke Filter -->
+  <div class="card" style="padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h3 class="card-title" style="font-size: 1.2rem; margin: 0;">Complete Race Records Log ({{ records|length }})</h3>
+        <span style="font-size: 0.775rem; color: var(--text-muted);">Verified timings across all state, district, and club meets</span>
+      </div>
+
+      <!-- Stroke Filter Pills -->
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="button" class="filter-pill active" onclick="filterStroke('all', this)">All Strokes</button>
+        <button type="button" class="filter-pill" onclick="filterStroke('freestyle', this)">Freestyle</button>
+        <button type="button" class="filter-pill" onclick="filterStroke('backstroke', this)">Backstroke</button>
+        <button type="button" class="filter-pill" onclick="filterStroke('breaststroke', this)">Breaststroke</button>
+        <button type="button" class="filter-pill" onclick="filterStroke('butterfly', this)">Butterfly</button>
+      </div>
+    </div>
+
+    {% if records %}
+    <div class="table-container">
+      <table class="data-table" id="raceRecordsTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Championship / Meet</th>
+            <th>Event</th>
+            <th>Official Time</th>
+            <th>Velocity (m/s)</th>
+            <th>Finish Rank</th>
+            <th>PB</th>
+            <th>Coach Feedback Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr data-stroke="{{ r.stroke|lower }}">
+            <td class="font-mono">{{ r.meet_date }}</td>
+            <td style="font-weight: 600; color: var(--text-main);">{{ r.meet_name }}</td>
+            <td>
+              <span style="font-weight: 800; color: var(--brand-primary);">{{ r.distance }}</span>
+              <span style="color: var(--text-muted); font-size: 0.85rem;">{{ r.stroke|replace('_', ' ')|title }}</span>
+            </td>
+            <td class="font-mono" style="font-size: 1.05rem; font-weight: 800; color: var(--brand-primary);">
+              {{ r.time_display }}
+            </td>
+            <td class="font-mono" style="font-size: 0.85rem; color: var(--text-muted);">
+              {% if r.time_seconds and r.time_seconds > 0 %}
+                {{ '{:.2f}'.format((r.distance|replace('m', '')|int) / r.time_seconds) }} m/s
+              {% else %}
+                --
+              {% endif %}
+            </td>
+            <td>
+              {% if r.position == 1 %}
+                <span style="background-color: #FEF3C7; color: #B45309; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #FDE68A;">
+                  🥇 1st Place
+                </span>
+              {% elif r.position == 2 %}
+                <span style="background-color: #F1F5F9; color: #475569; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #CBD5E1;">
+                  🥈 2nd Place
+                </span>
+              {% elif r.position == 3 %}
+                <span style="background-color: #FFEDD5; color: #9A3412; font-weight: 800; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #FED7AA;">
+                  🥉 3rd Place
+                </span>
+              {% elif r.position %}
+                <span class="font-mono" style="font-weight: 700; color: var(--text-muted);">#{{ r.position }}</span>
+              {% else %}
+                <span style="color: var(--text-muted);">--</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.is_personal_best %}
+                <span style="background-color: #DCFCE7; color: #15803D; font-size: 0.75rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid #86EFAC;">
+                  ★ PB
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.825rem; color: var(--text-muted);">
+              {{ r.notes or 'Clean finish' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0;">
+      No competition race history recorded yet for this swimmer.
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- Bottom Navigation Actions -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; flex-wrap: wrap; gap: 1rem;">
+    {% if user.role == 'member' %}
+      <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+        ← Back to Member Dashboard
+      </a>
+      <a href="{{ url_for('my_pass') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+        🖨️ View Official Entry Pass
+      </a>
+    {% else %}
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+        ← Back to Admin Hub
+      </a>
+      <a href="{{ url_for('attendance_tool') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+        🏊 Go to Batch Attendance
+      </a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const payload = JSON.parse('{{ chart_data_json | safe }}');
+
+// 1. Race Time Progression Timeline Chart
+const timelineCtx = document.getElementById('progressionLineChart');
+if (timelineCtx && payload.timeline && payload.timeline.length > 0) {
+  const labels = payload.timeline.map(r => `${r.meet_date} (${r.distance} ${r.stroke.substring(0,4)})`);
+  const dataPoints = payload.timeline.map(r => r.time_seconds);
+  const pointStyles = payload.timeline.map(r => r.is_pb ? 'star' : 'circle');
+  const pointRadii = payload.timeline.map(r => r.is_pb ? 9 : 5);
+  const pointColors = payload.timeline.map(r => r.is_pb ? '#F59E0B' : '#1F8A8A');
+
+  new Chart(timelineCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Official Time (Seconds)',
+        data: dataPoints,
+        borderColor: '#1F8A8A',
+        backgroundColor: 'rgba(31, 138, 138, 0.08)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.25,
+        pointStyle: pointStyles,
+        pointRadius: pointRadii,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: '#FFFFFF',
+        pointBorderWidth: 1.5,
+        pointHoverRadius: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          title: { display: true, text: 'Seconds', color: '#64748B', font: { weight: 'bold' } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { maxRotation: 45, minRotation: 0, font: { size: 10 } }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => payload.timeline[items[0].dataIndex].meet_name,
+            label: (item) => {
+              const rec = payload.timeline[item.dataIndex];
+              return `${rec.distance} ${rec.stroke.toUpperCase()}: ${rec.time_display} ${rec.is_pb ? '★ Personal Best!' : ''}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// 2. Stroke Specialization Doughnut Chart
+const strokeCtx = document.getElementById('strokeDoughnutChart');
+if (strokeCtx && payload.strokes) {
+  new Chart(strokeCtx, {
+    type: 'doughnut',
+    data: {
+      labels: payload.strokes.labels,
+      datasets: [{
+        data: payload.strokes.data,
+        backgroundColor: ['#1F8A8A', '#0284C7', '#D97706', '#8B5CF6', '#10B981'],
+        borderWidth: 2,
+        borderColor: '#FFFFFF'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+      },
+      cutout: '62%'
+    }
+  });
+}
+
+// 3. Speed Velocity by Distance Bar Chart
+const velCtx = document.getElementById('velocityBarChart');
+if (velCtx && payload.velocities) {
+  new Chart(velCtx, {
+    type: 'bar',
+    data: {
+      labels: payload.velocities.labels,
+      datasets: [{
+        label: 'Velocity (m/s)',
+        data: payload.velocities.data,
+        backgroundColor: '#0284C7',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          title: { display: true, text: 'Meters / Sec (m/s)', font: { size: 10, weight: 'bold' } },
+          beginAtZero: true
+        },
+        x: { grid: { display: false } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// 4. Podium / Finishing Distribution Doughnut Chart
+const podiumCtx = document.getElementById('podiumDoughnutChart');
+if (podiumCtx && payload.finishes) {
+  new Chart(podiumCtx, {
+    type: 'doughnut',
+    data: {
+      labels: payload.finishes.labels,
+      datasets: [{
+        data: payload.finishes.data,
+        backgroundColor: ['#F59E0B', '#94A3B8', '#EA580C', '#0284C7', '#E2E8F0'],
+        borderWidth: 2,
+        borderColor: '#FFFFFF'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// Client-side Stroke Filter for Race Table
+function filterStroke(stroke, btn) {
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const rows = document.querySelectorAll('#raceRecordsTable tbody tr');
+  rows.forEach(r => {
+    const s = r.getAttribute('data-stroke');
+    if (stroke === 'all' || s === stroke) {
+      r.style.display = '';
+    } else {
+      r.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

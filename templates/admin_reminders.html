@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Automated Reminder Logs – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Automated Lifecycle Communications</span>
+      <h1 style="font-size: 1.85rem;">Membership Expiry Reminder Logs</h1>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <form action="{{ url_for('admin_run_reminders_now') }}" method="POST">
+        <button type="submit" class="btn btn-primary btn-sm">
+          🔔 Run Reminders Now (Testing Trigger)
+        </button>
+      </form>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+        ← Admin Hub
+      </a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem; background-color: var(--surface-subtle);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="font-size: 1.75rem;">⏰</div>
+      <div style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+        <strong>Background Reminder Automation (APScheduler):</strong> Checks active memberships every day at 06:00 AM for passes expiring in <strong>7 days, 3 days, 1 day, and on the expiry day</strong>. Every dispatched notification is logged in <code>reminder_logs</code> with a unique composite key to prevent duplicates.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Recent Dispatched Reminders ({{ logs|length }})</h3>
+    </div>
+
+    {% if logs %}
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Recipient Email &amp; Phone</th>
+            <th>Reminder Type</th>
+            <th>Target Expiry Date</th>
+            <th>Dispatched Timestamp</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in logs %}
+          <tr>
+            <td style="font-weight: 700;">{{ l.name }}</td>
+            <td>
+              <div style="font-size: 0.85rem;">{{ l.email }}</div>
+              <div class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">{{ l.phone }}</div>
+            </td>
+            <td>
+              {% if l.reminder_type == '7_day' %}
+                <span style="background: #E0F2FE; color: #0369A1; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">7 Days Before</span>
+              {% elif l.reminder_type == '3_day' %}
+                <span style="background: #FEF3C7; color: #92400E; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">3 Days Before</span>
+              {% elif l.reminder_type == '1_day' %}
+                <span style="background: #FFEDD5; color: #C2410C; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">1 Day Before (Tomorrow)</span>
+              {% else %}
+                <span style="background: #FEE2E2; color: #B91C1C; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Expiry Day</span>
+              {% endif %}
+            </td>
+            <td class="font-mono" style="font-weight: 600;">{{ l.target_date }}</td>
+            <td class="font-mono" style="font-size: 0.8rem; color: var(--text-muted);">{{ l.sent_at }}</td>
+            <td>
+              <span class="status-badge status-active">✓ {{ l.status|capitalize }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 3rem 0;">
+      No reminder logs recorded yet. Click "Run Reminders Now" above to trigger a test check against seeded expiry dates.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

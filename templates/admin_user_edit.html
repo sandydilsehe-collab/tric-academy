@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Member – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px; padding-top: 2rem; padding-bottom: 5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Edit Account</span>
+      <h1 style="font-size: 1.75rem;">Modify Member: {{ member.name }}</h1>
+    </div>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">
+      ← Back to Directory
+    </a>
+  </div>
+
+  <div class="card" style="padding: 2rem;">
+    <form method="POST">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-control" value="{{ member.name }}" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">ID Card Number</label>
+          <input type="text" name="id_card_number" class="form-control font-mono" value="{{ member.id_card_number or '' }}">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Email ID</label>
+          <input type="email" name="email" class="form-control" value="{{ member.email }}" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Contact Phone</label>
+          <input type="tel" name="phone" class="form-control font-mono" value="{{ member.phone }}" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">User Role</label>
+          <select name="role" class="form-control">
+            <option value="member" {% if member.role == 'member' %}selected{% endif %}>Member</option>
+            <option value="coach" {% if member.role == 'coach' %}selected{% endif %}>Coach</option>
+            <option value="admin" {% if member.role == 'admin' %}selected{% endif %}>Admin</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Account Status</label>
+          <select name="status" class="form-control">
+            <option value="approved" {% if member.status == 'approved' %}selected{% endif %}>Approved</option>
+            <option value="pending" {% if member.status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="deactivated" {% if member.status == 'deactivated' %}selected{% endif %}>Deactivated</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-hairline); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 1rem;">Membership Plan &amp; Batch Assignment</h4>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Assigned Batch</label>
+            <select name="batch_id" class="form-control">
+              <option value="">-- Unassigned --</option>
+              {% for b in batches %}
+              <option value="{{ b.id }}" {% if b.id == member.batch_id %}selected{% endif %}>
+                {{ b.name }} ({{ b.timing_desc }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Membership Plan</label>
+            <select name="plan_id" class="form-control">
+              <option value="">-- No Plan --</option>
+              {% for p in plans %}
+              <option value="{{ p.id }}" {% if p.id == member.plan_id %}selected{% endif %}>
+                {{ p.name }} ({{ p.duration_days }} Days - ₹{{ '{:,.0f}'.format(p.fee_amount) }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Validity Start Date</label>
+            <input type="date" name="start_date" class="form-control" value="{{ member.start_date or '' }}">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Validity End Date</label>
+            <input type="date" name="end_date" class="form-control" value="{{ member.end_date or '' }}">
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
