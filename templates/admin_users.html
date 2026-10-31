@@ -3,27 +3,24 @@
 {% block title %}Members Directory – TRIC Academy{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
-  
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-    <div>
-      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Member Registry</span>
-      <h1 style="font-size: 1.85rem;">All Academy Users &amp; Members ({{ users|length }})</h1>
-    </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="{{ url_for('admin_user_create') }}" class="btn btn-primary btn-sm">
-        + Create Member Pass
-      </a>
-      <a href="{{ url_for('export_users_csv') }}" class="btn btn-secondary btn-sm">
-        ⬇ Export CSV
-      </a>
-      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
-        ← Admin Hub
-      </a>
+<div class="page-hero-banner">
+  <div class="container" style="max-width: 1200px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+      <div>
+        <div class="hero-badge">⚙️ Swimmer Records & Pass Directory</div>
+        <h1 style="color: #FFFFFF; margin: 0.25rem 0 0.5rem 0; font-size: clamp(1.75rem, 3.5vw, 2.35rem);">Member Directory</h1>
+        <p style="color: #CBD5E1; margin: 0; font-size: 0.95rem;">Manage swimmer memberships, issue warnings, trigger free WhatsApp alerts, and edit profile details.</p>
+      </div>
+      <div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+          ← Back to Admin Hub
+        </a>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- Search & Filter Controls -->
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
   <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem;">
     <form method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
       <div style="flex: 1; min-width: 220px;">

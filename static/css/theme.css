@@ -37,6 +37,7 @@ html {
 body {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text-main);
+  background: linear-gradient(rgba(240, 249, 255, 0.94), rgba(248, 250, 252, 0.97)), url('/static/images/pool.jpg') fixed center / cover no-repeat;
   background-color: var(--canvas-bg);
   line-height: 1.6;
   min-height: 100vh;
@@ -58,6 +59,54 @@ h1, h2, h3, h4, .font-heading {
 }
 
 /* Fixed Fullscreen Pool Background for Landing */
+
+/* Universal Page Hero Banner with Pool Background */
+.page-hero-banner {
+  position: relative;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.88)), url('/static/images/pool.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #FFFFFF;
+  padding: 3rem 1.5rem 3.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 -20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.page-hero-banner .hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(31, 138, 138, 0.3);
+  border: 1px solid rgba(45, 212, 191, 0.4);
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5EEAD4;
+  margin-bottom: 0.75rem;
+  backdrop-filter: blur(4px);
+}
+
+.page-hero-banner h1 {
+  color: #FFFFFF;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.page-hero-banner p {
+  color: #CBD5E1;
+  font-size: 0.95rem;
+  max-width: 680px;
+  line-height: 1.6;
+  margin: 0;
+}
+
 .pool-hero-bg {
   position: fixed;
   top: 0;
@@ -76,13 +125,30 @@ h1, h2, h3, h4, .font-heading {
 
 /* Top Navigation Bar */
 .top-navbar {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-hairline);
+  background-color: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
   width: 100%;
+}
+
+.top-navbar .brand-name {
+  color: #FFFFFF;
+}
+
+.top-navbar .brand-sub {
+  color: #94A3B8;
+}
+
+.top-navbar .nav-link {
+  color: #CBD5E1;
+}
+
+.top-navbar .nav-link:hover,
+.top-navbar .nav-link.active {
+  color: #38BDF8;
 }
 
 .top-navbar.nav-dark {

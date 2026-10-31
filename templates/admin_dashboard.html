@@ -3,30 +3,37 @@
 {% block title %}Admin Hub – TRIC Academy{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
-  
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-    <div>
-      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Academy Operations Hub</span>
-      <h1 style="font-size: 1.85rem;">Administration Dashboard</h1>
-    </div>
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-      <a href="{{ url_for('admin_user_create') }}" class="btn btn-primary btn-sm">
-        + Create User (Entry Pass)
-      </a>
-      <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">
-        Pending Passes ({{ pending_users }})
-      </a>
-      <form action="{{ url_for('admin_run_reminders_now') }}" method="POST" style="display: inline;">
-        <button type="submit" class="btn btn-secondary btn-sm" title="Trigger expiry reminder job immediately">
-          🔔 Run Reminders Now
-        </button>
-      </form>
-      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
-        🚪 Log Out
-      </a>
+<div class="page-hero-banner">
+  <div class="container" style="max-width: 1200px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+      <div>
+        <div class="hero-badge">⚙️ Operations Hub</div>
+        <h1 style="color: #FFFFFF; margin: 0.25rem 0 0.5rem 0; font-size: clamp(1.8rem, 3.5vw, 2.5rem);">Administration Dashboard</h1>
+        <p style="color: #CBD5E1; margin: 0; font-size: 0.95rem;">
+          Manage applicant verifications, member passes, batch allocations, automated WhatsApp alerts, and system database backups.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+        <a href="{{ url_for('admin_user_create') }}" class="btn btn-primary btn-sm" style="box-shadow: 0 4px 12px rgba(31, 138, 138, 0.4); font-weight: 700;">
+          + Create User (Entry Pass)
+        </a>
+        <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+          Pending Passes ({{ pending_users }})
+        </a>
+        <form action="{{ url_for('admin_run_reminders_now') }}" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;" title="Trigger expiry reminder job immediately">
+            🔔 Run Reminders Now
+          </button>
+        </form>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+          🚪 Log Out
+        </a>
+      </div>
     </div>
   </div>
+</div>
+
+<div class="container" style="padding-top: 2rem; padding-bottom: 5rem;">
 
   <!-- Stat Counters -->
   <div class="stat-grid">

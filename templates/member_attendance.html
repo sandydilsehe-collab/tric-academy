@@ -3,16 +3,24 @@
 {% block title %}My Attendance – TRIC Academy{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; padding-top: 3rem; padding-bottom: 5rem;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-      <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase;">Attendance Records</span>
-      <h1 style="font-size: 1.75rem;">My Pool Attendance</h1>
+<div class="page-hero-banner">
+  <div class="container" style="max-width: 800px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div class="hero-badge">⏱️ Swimmer Attendance Logs</div>
+        <h1 style="color: #FFFFFF; margin: 0.2rem 0; font-size: clamp(1.75rem, 3vw, 2.25rem);">My Pool Attendance</h1>
+        <p style="color: #CBD5E1; margin: 0; font-size: 0.95rem;">
+          Track your daily gate entry, batch sessions, and attendance history at TRIC Academy.
+        </p>
+      </div>
+      <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+        ← Back to Dashboard
+      </a>
     </div>
-    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm">
-      ← Back to Dashboard
-    </a>
   </div>
+</div>
+
+<div class="container" style="max-width: 800px; padding-top: 2rem; padding-bottom: 5rem;">
 
   <div class="card">
     {% if history %}

@@ -3,46 +3,49 @@
 {% block title %}Rules & Regulations – TRIC Academy{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 900px; padding-top: 3rem; padding-bottom: 5rem;">
-  
-  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      {% if current_user %}
-        <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;" data-i18n="rules_back_dash">
-          ← Back to Dashboard
-        </a>
-      {% else %}
-        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;" data-i18n="rules_back_home">
-          ← Back to Home
-        </a>
-      {% endif %}
+<div class="page-hero-banner">
+  <div class="container" style="max-width: 1000px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
       <div>
-        <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em;" data-i18n="rules_page_subtitle">Official Academy Guidelines</span>
-        <h1 style="font-size: 1.85rem; margin-top: 0.25rem; margin-bottom: 0;" data-i18n="rules_page_title">Pool Rules &amp; Regulations</h1>
+        <div class="hero-badge" data-i18n="rules_page_subtitle">🏊 Official Academy Guidelines</div>
+        <h1 data-i18n="rules_page_title" style="color: #FFFFFF; margin: 0.25rem 0 0.5rem 0;">Pool Rules &amp; Regulations</h1>
+        <p data-i18n="rules_page_lead" style="color: #CBD5E1; margin: 0; font-size: 0.95rem;">
+          All members, swimmers, parents, and visitors are strictly required to adhere to the 32 general rules and regulations established by TRIC Academy authority.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        {% if current_user %}
+          <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;" data-i18n="rules_back_dash">
+            ← Back to Dashboard
+          </a>
+        {% else %}
+          <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;" data-i18n="rules_back_home">
+            ← Back to Home
+          </a>
+        {% endif %}
+        <!-- Page-level Quick Language Switcher -->
+        <button type="button" class="lang-toggle-btn" onclick="toggleTricLanguage()" title="Switch Language / மொழியை மாற்றுக">
+          <span class="lang-icon">🌐</span>
+          <span id="rulesLangToggleLabel">தமிழ் / English</span>
+        </button>
+        <button onclick="window.print()" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF;" data-i18n="rules_print_btn">
+          🖨️ Print Rules
+        </button>
+        {% if not current_user %}
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm" data-i18n="rules_apply_btn">
+            Apply for Pass
+          </a>
+        {% elif current_user.role == 'member' %}
+          <a href="{{ url_for('renew_membership') }}" class="btn btn-primary btn-sm" style="font-weight: 700;">
+            ⚡ Renew Pass
+          </a>
+        {% endif %}
       </div>
     </div>
-    <div style="display: flex; gap: 0.75rem; align-items: center;">
-      <!-- Page-level Quick Language Switcher -->
-      <button type="button" class="lang-toggle-btn" onclick="toggleTricLanguage()" title="Switch Language / மொழியை மாற்றുക">
-        <span class="lang-icon">🌐</span>
-        <span id="rulesLangToggleLabel">தமிழ் / English</span>
-      </button>
-
-      <button onclick="window.print()" class="btn btn-secondary btn-sm" data-i18n="rules_print_btn">
-        🖨️ Print Rules
-      </button>
-      {% if not current_user %}
-        <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm" data-i18n="rules_apply_btn">
-          Apply for Pass
-        </a>
-      {% elif current_user.role == 'member' %}
-        <a href="{{ url_for('renew_membership') }}" class="btn btn-primary btn-sm" style="font-weight: 700;">
-          ⚡ Renew Pass
-        </a>
-      {% endif %}
-    </div>
   </div>
+</div>
 
+<div class="container" style="max-width: 1000px; padding-top: 2.5rem; padding-bottom: 5rem;">
   <div class="card" style="padding: 2rem;">
     <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; border-bottom: 1px solid var(--border-hairline); padding-bottom: 1rem;" data-i18n="rules_page_lead">
       All members, swimmers, parents, and visitors are strictly required to adhere to the 32 general rules and regulations established by TRIC Academy authority.

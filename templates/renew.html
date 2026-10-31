@@ -67,22 +67,24 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 680px; padding-top: 2rem; padding-bottom: 5rem;">
-  
-  <!-- Navigation Back Bar & Breadcrumbs -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; text-decoration: none;">
-      <span>←</span>
-      <span>Back to Member Dashboard</span>
-    </a>
-    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem;">
-      <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none;">Home</a>
-      <span>/</span>
-      <a href="{{ url_for('member_dashboard') }}" style="color: var(--text-muted); text-decoration: none;">Member Portal</a>
-      <span>/</span>
-      <span style="color: var(--brand-primary); font-weight: 700;">Renew Pass</span>
+<div class="page-hero-banner">
+  <div class="container" style="max-width: 680px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div class="hero-badge">⚡ Instant UPI Renewal Gateway</div>
+        <h1 style="color: #FFFFFF; margin: 0.2rem 0; font-size: clamp(1.75rem, 3vw, 2.25rem);">Renew Academy Pass</h1>
+        <p style="color: #CBD5E1; margin: 0; font-size: 0.925rem;">
+          Member: <strong>{{ user.name }}</strong> · App No: <span class="font-mono">{{ user.app_no }}</span>
+        </p>
+      </div>
+      <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+        ← Back to Dashboard
+      </a>
     </div>
   </div>
+</div>
+
+<div class="container" style="max-width: 680px; padding-top: 2rem; padding-bottom: 5rem;">
 
   <div class="card" style="padding: 2.5rem 2rem;">
     

@@ -3,6 +3,41 @@
 {% block title %}Application Form for Entry Pass – TRIC Academy{% endblock %}
 
 {% block content %}
+<div class="page-hero-banner no-print">
+  <div class="container" style="max-width: 960px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem;">
+      <div>
+        <div class="hero-badge">
+          {% if is_admin_mode %}Admin Verification Portal{% elif is_view_mode %}Member Entry Pass{% else %}Applicant Registration{% endif %}
+        </div>
+        <h1 style="color: #FFFFFF; margin: 0 0 0.35rem 0; font-size: clamp(1.75rem, 3.5vw, 2.35rem);">TRIC Academy – Entry Pass Form</h1>
+        <p style="color: #CBD5E1; margin: 0; font-size: 0.95rem;">
+          Official swimmer admission, medical declaration, batch allocation, and parent consent agreement.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        {% if is_view_mode %}
+          <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+            ← Back to Dashboard
+          </a>
+        {% elif is_admin_mode %}
+          <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+            ← Back to Applicants
+          </a>
+        {% else %}
+          <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
+            ← Back to Home
+          </a>
+        {% endif %}
+        <button type="button" class="lang-toggle-btn" onclick="toggleTricLanguage()" title="Switch Language / மொழியை மாற்றுக">
+          <span class="lang-icon">🌐</span>
+          <span id="appHeroLangToggleLabel">தமிழ் / English</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="paper-sheet-wrapper">
 
   <!-- Printable Action Bar at Top (hidden during print) -->
