@@ -99,28 +99,7 @@ def allowed_file(filename, allowed_extensions):
 def get_current_user():
     if session.get('logged_out'):
         return None
-    uid = session.get('user_id') or request.args.get('uid') or request.args.get('user_id')
-    
-    # Check JSON or Form payload
-    if not uid and request.is_json:
-        data = request.get_json(silent=True)
-        if isinstance(data, dict):
-            uid = data.get('uid') or data.get('user_id')
-    if not uid and request.form:
-        uid = request.form.get('uid') or request.form.get('user_id')
-
-    # Fallback: check referrer URL query params (in case of iframe cookie isolation)
-    if not uid and request.referrer:
-        try:
-            parsed = urllib.parse.urlparse(request.referrer)
-            q = urllib.parse.parse_qs(parsed.query)
-            if 'uid' in q:
-                uid = q['uid'][0]
-            elif 'user_id' in q:
-                uid = q['user_id'][0]
-        except Exception:
-            pass
-
+    uid = session.get('user_id')
     if not uid:
         return None
 
@@ -135,42 +114,12 @@ def get_current_user():
         LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
         LEFT JOIN batches b ON m.batch_id = b.id
         LEFT JOIN plans p ON m.plan_id = p.id
-        WHERE u.id = ? OR u.app_no = ? OR LOWER(u.email) = ?
+        WHERE u.id = ?
         """,
-        (uid, uid, str(uid).lower())
+        (uid,)
     ).fetchone()
 
-    if user and 'user_id' not in session:
-        session.permanent = True
-        session.pop('logged_out', None)
-        session['user_id'] = user['id']
-        session['user_role'] = user['role']
-        session['user_name'] = user['name']
-
     return user
-
-@app.before_request
-def restore_session_from_param():
-    uid = request.args.get('uid') or request.args.get('user_id')
-    if not uid and request.referrer:
-        try:
-            parsed = urllib.parse.urlparse(request.referrer)
-            q = urllib.parse.parse_qs(parsed.query)
-            if 'uid' in q:
-                uid = q['uid'][0]
-            elif 'user_id' in q:
-                uid = q['user_id'][0]
-        except Exception:
-            pass
-
-    if uid and 'user_id' not in session:
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE id = ? OR app_no = ? OR LOWER(email) = ?", (uid, uid, str(uid).lower())).fetchone()
-        if user:
-            session.permanent = True
-            session['user_id'] = user['id']
-            session['user_role'] = user['role']
-            session['user_name'] = user['name']
 
 @app.after_request
 def configure_response_headers(response):
@@ -192,30 +141,6 @@ def configure_response_headers(response):
     # Ensure iframe embedding in AI Studio preview works
     response.headers['X-Frame-Options'] = 'ALLOWALL'
     return response
-
-# Smart url_for Jinja helper to ensure uid is preserved across pages in iframe preview
-_original_url_for = app.jinja_env.globals['url_for']
-
-def smart_url_for(endpoint, **values):
-    if session.get('logged_out') or endpoint in ('logout', 'login'):
-        return _original_url_for(endpoint, **values)
-    current_uid = session.get('user_id') or request.args.get('uid') or request.args.get('user_id')
-    if not current_uid and request.referrer:
-        try:
-            parsed = urllib.parse.urlparse(request.referrer)
-            q = urllib.parse.parse_qs(parsed.query)
-            if 'uid' in q:
-                current_uid = q['uid'][0]
-            elif 'user_id' in q:
-                current_uid = q['user_id'][0]
-        except Exception:
-            pass
-
-    if current_uid and 'uid' not in values and not endpoint.startswith('static') and endpoint not in ('logout', 'login'):
-        values['uid'] = current_uid
-    return _original_url_for(endpoint, **values)
-
-app.jinja_env.globals['url_for'] = smart_url_for
 
 @app.context_processor
 def inject_user():
@@ -999,15 +924,14 @@ def direct_login(identifier):
 
     next_url = request.args.get('next')
     if next_url and next_url.startswith('/'):
-        target = next_url + ('&' if '?' in next_url else '?') + f"uid={user['id']}"
-        return redirect(target, code=303)
+        return redirect(next_url, code=303)
 
     if user['role'] == 'admin':
-        return redirect(url_for('admin_dashboard', uid=user['id']), code=303)
+        return redirect(url_for('admin_dashboard'), code=303)
     elif user['role'] == 'coach':
-        return redirect(url_for('attendance_tool', uid=user['id']), code=303)
+        return redirect(url_for('attendance_tool'), code=303)
     else:
-        return redirect(url_for('member_dashboard', uid=user['id']), code=303)
+        return redirect(url_for('member_dashboard'), code=303)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1037,17 +961,8 @@ def login():
             flash('No account found with that email, phone number, or name.', 'error')
             return redirect(url_for('login'))
 
-        # Check password with hash, with fallback for Santhosh or common demo passwords
-        pwd_valid = check_password_hash(user['password_hash'], password)
-        if not pwd_valid:
-            if user['name'].lower() == 'santhosh' or user['email'] == 'sandy.dilsehe@gmail.com' or 'santhosh' in user['name'].lower():
-                pwd_valid = True
-                db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (generate_password_hash(password if password else 'password123'), user['id']))
-                db.commit()
-            elif password in ('password123', 'admin123', 'coach123', 'member123', 'tric123', '123456', user['phone']):
-                pwd_valid = True
-
-        if not pwd_valid:
+        # Strict password verification against stored password hash
+        if not check_password_hash(user['password_hash'], password):
             flash('Incorrect password. Please verify and try again.', 'error')
             return redirect(url_for('login'))
 
@@ -1068,30 +983,30 @@ def login():
 
         next_url = request.args.get('next') or request.form.get('next')
         if next_url and next_url.startswith('/'):
-            target = next_url + ('&' if '?' in next_url else '?') + f"uid={user['id']}"
-            return redirect(target, code=303)
+            return redirect(next_url, code=303)
 
         if user['status'] == 'pending':
             flash(f"Welcome, {user['name']}! Your entry pass registration is in Pending Office Verification mode.", 'info')
-            return redirect(url_for('member_dashboard', uid=user['id']), code=303)
+            return redirect(url_for('member_dashboard'), code=303)
 
         if user['role'] == 'admin':
-            return redirect(url_for('admin_dashboard', uid=user['id']), code=303)
+            return redirect(url_for('admin_dashboard'), code=303)
         elif user['role'] == 'coach':
-            return redirect(url_for('attendance_tool', uid=user['id']), code=303)
+            return redirect(url_for('attendance_tool'), code=303)
         else:
-            return redirect(url_for('member_dashboard', uid=user['id']), code=303)
+            return redirect(url_for('member_dashboard'), code=303)
 
     return render_template('login.html')
 
 @app.route('/quick-approve/<int:user_id>')
+@role_required(['admin'])
 def quick_approve_member(user_id):
-    """Convenience endpoint to immediately approve a pending applicant for local testing."""
+    """Convenience endpoint to immediately approve a pending applicant for admin testing."""
     db = get_db()
     user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
     if not user:
         flash('Applicant not found.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('admin_applicants'))
 
     today = date.today()
     end_date = today + timedelta(days=90)
@@ -1124,11 +1039,8 @@ def quick_approve_member(user_id):
         (today, end_date, f"TRIC-ID-{date.today().year}-{user_id:04d}", user_id)
     )
     db.commit()
-    session['user_id'] = user['id']
-    session['user_role'] = user['role']
-    session['user_name'] = user['name']
     flash(f"Success! {user['name']}'s entry pass and quarterly membership have been activated.", 'success')
-    return redirect(url_for('member_dashboard', uid=user['id']))
+    return redirect(request.referrer or url_for('admin_applicants'))
 
 @app.route('/confirm-rules', methods=['GET', 'POST'])
 def confirm_rules():
