@@ -549,18 +549,30 @@ class CostEffectiveAlertService:
         return digits
 
     def compose_whatsapp_text(self, name, plan_name, end_date, days_left, user_id=None, batch_name=None):
-        if days_left is None or days_left < 0:
+        if days_left is None:
+            urgency = "🏊 *OFFICIAL TRIC ACADEMY PASS NOTICE*"
+            time_desc = "is currently active"
+            action_line = "To view your digital pass details or renew online via instant UPI (Google Pay, PhonePe, Paytm, CRED):"
+        elif days_left < 0:
             urgency = "🚫 *MEMBERSHIP EXPIRED*"
-            time_desc = f"on {end_date} (Expired)" if end_date else "recently"
+            time_desc = f"expired on {end_date}" if end_date else "recently expired"
+            action_line = "To retain your assigned swimming slot and reactivate your entry pass, please renew online via instant UPI:"
         elif days_left == 0:
             urgency = "⚠️ *MEMBERSHIP EXPIRES TODAY*"
-            time_desc = "today"
+            time_desc = "expires today"
+            action_line = "To retain your assigned swimming slot and avoid entry pass lockout, please renew online via instant UPI:"
         elif days_left == 1:
             urgency = "⚠️ *MEMBERSHIP EXPIRES TOMORROW*"
-            time_desc = f"tomorrow ({end_date})"
-        else:
+            time_desc = f"expires tomorrow ({end_date})"
+            action_line = "To retain your assigned swimming slot and avoid entry pass lockout, please renew online via instant UPI:"
+        elif days_left <= 7:
             urgency = f"⏰ *MEMBERSHIP EXPIRES IN {days_left} DAYS*"
-            time_desc = f"in {days_left} days ({end_date})"
+            time_desc = f"expires in {days_left} days ({end_date})"
+            action_line = "To retain your assigned swimming slot and avoid entry pass lockout, please renew online via instant UPI:"
+        else:
+            urgency = "🏊 *ACTIVE TRIC ACADEMY MEMBERSHIP*"
+            time_desc = f"is active (valid until {end_date})"
+            action_line = "To review your pass or extend your membership anytime via instant UPI:"
 
         renew_url = f"{self.base_url}/renew"
         if user_id:
@@ -572,8 +584,8 @@ class CostEffectiveAlertService:
             f"🏊 *TRIC ACADEMY – School of Swimming*\n"
             f"{urgency}\n\n"
             f"Dear *{name}*,\n"
-            f"This is an official notice regarding your *{plan_name or 'Swimming Pass'}*, which expires *{time_desc}*.{batch_line}\n\n"
-            f"To retain your assigned swimming slot and avoid entry pass lockout, please renew online via UPI (Google Pay, PhonePe, Paytm, CRED):\n\n"
+            f"This is an official notice regarding your *{plan_name or 'Swimming Pass'}*, which {time_desc}.{batch_line}\n\n"
+            f"{action_line}\n\n"
             f"⚡ *Instant UPI Renewal Link:*\n"
             f"{renew_url}\n\n"
             f"📍 *Academy Location:* 85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur (GPS: 11°08'30.0\"N 77°18'21.2\"E)\n"

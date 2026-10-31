@@ -162,18 +162,11 @@
                 <div style="display: inline-flex; gap: 0.35rem; align-items: center; justify-content: flex-end;">
                   <!-- WhatsApp Direct 1-Click Alert (Cost: ₹0.00 / Free) -->
                   <a href="{{ whatsapp_alert_url(m) }}" target="_blank" rel="noopener noreferrer" 
-                     class="btn btn-sm" 
-                     style="font-size: 0.72rem; padding: 3px 8px; background: #25D366; border-color: #22C55E; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;"
-                     title="Send Instant WhatsApp Alert (Cost: ₹0.00 Free)">
-                    💬 WhatsApp (₹0)
+                     class="btn btn-sm whatsapp-member-btn" 
+                     style="font-size: 0.75rem; padding: 3px 9px; background: #25D366; border: 1px solid #16A34A; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 4px; box-shadow: 0 1px 4px rgba(37, 211, 102, 0.35);"
+                     title="Send Instant WhatsApp Alert to {{ m.name }} ({{ m.phone }})">
+                    💬 WhatsApp
                   </a>
-                  <!-- Auto Dispatch (Picks cheapest: WhatsApp API or SMS) -->
-                  <form action="{{ url_for('admin_send_member_reminder', user_id=m.id) }}" method="POST" style="display: inline;">
-                    <input type="hidden" name="channel" value="auto">
-                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 3px 7px;" title="Auto-send via cheapest channel (WhatsApp / SMS)">
-                      📢 Auto Alert
-                    </button>
-                  </form>
                 </div>
               </td>
             </tr>

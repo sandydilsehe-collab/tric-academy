@@ -16,6 +16,10 @@
         </p>
       </div>
       <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <!-- WhatsApp Connect Button -->
+        <a href="https://wa.me/919894777333?text=Hi%20TRIC%20Academy,%20inquiring%20about%20my%20swimming%20pass%20({{ user.name }},%20Pass%20ID:%20{{ (office.id_card_number if office else user.app_no) or 'TRIC-PASS' }})" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #25D366; border: 1px solid #16A34A; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35); border-radius: 4px;">
+          💬 WhatsApp Office
+        </a>
         <a href="{{ url_for('my_pass', view_id=user.id) }}" target="_blank" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
           🖨️ View Official Pass
         </a>
@@ -124,9 +128,7 @@
         </span>
       </div>
     </div>
-    <a href="{{ url_for('quick_approve_member', user_id=user.id, uid=user.id) }}" class="btn btn-primary btn-sm" style="background-color: #D97706; border-color: #B45309; font-weight: 700;">
-      ⚡ 1-Click Activate Pass (Test Mode)
-    </a>
+
   </div>
   {% endif %}
 
