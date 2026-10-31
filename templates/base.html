@@ -144,11 +144,6 @@
 
       <!-- Zone 3: Primary Action / User Profile (Desktop & Mobile) -->
       <div class="nav-actions">
-        <!-- Quick English / தமிழ் Language Switcher Toggle -->
-        <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleTricLanguage()" title="Switch Language / மொழியை மாற்றுக" aria-label="Toggle language">
-          <span class="lang-icon">🌐</span>
-          <span class="lang-label" id="langToggleLabel">தமிழ்</span>
-        </button>
 
         {% if current_user %}
           <!-- Notification Bell Dropdown -->
@@ -223,16 +218,7 @@
           <button type="button" class="mobile-nav-close" id="mobileNavCloseBtn" aria-label="Close menu">&times;</button>
         </div>
 
-        <!-- Mobile Quick Language Switcher -->
-        <div class="mobile-lang-row">
-          <span>🌐 Language / மொழி:</span>
-          <button type="button" class="lang-toggle-btn" id="mobileLangToggleBtn" onclick="toggleTricLanguage()">
-            <span class="lang-icon">🌐</span>
-            <span class="lang-label" id="mobileLangToggleLabel">தமிழ்</span>
-          </button>
-        </div>
-
-        <nav class="mobile-links-list">
+<nav class="mobile-links-list">
           <a href="{{ url_for('index') }}#about" class="mobile-nav-item">
             <span class="mobile-nav-icon">🏊</span> <span data-i18n="nav_about">About Academy</span>
           </a>

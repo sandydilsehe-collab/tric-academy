@@ -300,7 +300,7 @@
    * Get current selected language ('en' or 'ta')
    */
   function getCurrentLanguage() {
-    return localStorage.getItem('tric_lang') || 'en';
+    return 'en';
   }
 
   /**
