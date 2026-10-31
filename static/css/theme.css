@@ -37,8 +37,10 @@ html {
 body {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text-main);
-  background: linear-gradient(rgba(240, 249, 255, 0.94), rgba(248, 250, 252, 0.97)), url('/static/images/pool.jpg') fixed center / cover no-repeat;
-  background-color: var(--canvas-bg);
+  /* Standard Web Page Architecture: Atmospheric Global Aquatic Canvas with Subtle Watermark */
+  background: 
+    linear-gradient(180deg, rgba(240, 249, 255, 0.90) 0%, rgba(248, 250, 252, 0.94) 400px, rgba(241, 245, 249, 0.97) 100%),
+    url('/static/images/gallery/tric_pool_panorama_hd.jpg') fixed center top / cover no-repeat;
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
@@ -63,7 +65,7 @@ h1, h2, h3, h4, .font-heading {
 /* Universal Page Hero Banner with Pool Background */
 .page-hero-banner {
   position: relative;
-  background-image: linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.88)), url('/static/images/pool.jpg');
+  background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.80) 0%, rgba(15, 23, 42, 0.92) 100%), url('/static/images/gallery/tric_pool_panorama_hd.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -116,7 +118,7 @@ h1, h2, h3, h4, .font-heading {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background-image: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.85)), url('/static/images/pool.jpg');
+  background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.68) 0%, rgba(15, 23, 42, 0.88) 100%), url('/static/images/gallery/tric_pool_panorama_hd.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
