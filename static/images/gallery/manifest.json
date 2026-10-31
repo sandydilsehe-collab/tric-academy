@@ -1,0 +1,51 @@
+[
+  {
+    "file": "tric_pool_panorama_hd.jpg",
+    "path": "/static/images/gallery/tric_pool_panorama_hd.jpg",
+    "size": "1920x1080",
+    "bytes": 259818,
+    "caption": "TRIC Academy Swimming Pool \u2013 Panoramic Facility View (1920x1080)"
+  },
+  {
+    "file": "tric_coaching_session.jpg",
+    "path": "/static/images/gallery/tric_coaching_session.jpg",
+    "size": "720x720",
+    "bytes": 175802,
+    "caption": "Active Coaching & Training Session \u2013 Pool Deck & Swimmers (720x720)"
+  },
+  {
+    "file": "tric_indoor_pool_lanes.jpg",
+    "path": "/static/images/gallery/tric_indoor_pool_lanes.jpg",
+    "size": "540x960",
+    "bytes": 57639,
+    "caption": "Indoor Swimming Pool \u2013 Lane Dividers & Structure (540x960)"
+  },
+  {
+    "file": "tric_coach_student_guiding.jpg",
+    "path": "/static/images/gallery/tric_coach_student_guiding.jpg",
+    "size": "720x1280",
+    "bytes": 357584,
+    "caption": "Personalized Swimming Instruction & Practice (720x1280)"
+  },
+  {
+    "file": "tric_toddler_champion.jpg",
+    "path": "/static/images/gallery/tric_toddler_champion.jpg",
+    "size": "1080x1920",
+    "bytes": 147921,
+    "caption": "Toddler Swimming Program \u2013 TRIC Academy (1080x1920)"
+  },
+  {
+    "file": "tric_diving_lineup.jpg",
+    "path": "/static/images/gallery/tric_diving_lineup.jpg",
+    "size": "540x960",
+    "bytes": 49280,
+    "caption": "Batch Diving & Starting Block Practice (540x960)"
+  },
+  {
+    "file": "tric_toddler_water_entry.jpg",
+    "path": "/static/images/gallery/tric_toddler_water_entry.jpg",
+    "size": "540x960",
+    "bytes": 47802,
+    "caption": "Water Acclimation & Beginner Confidence Training (540x960)"
+  }
+]

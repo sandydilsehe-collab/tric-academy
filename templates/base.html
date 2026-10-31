@@ -30,6 +30,7 @@
         <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
         <a href="{{ url_for('index') }}#fees" class="nav-link" data-i18n="nav_fees">Fees</a>
         <a href="{{ url_for('index') }}#testimonials" class="nav-link" data-i18n="nav_testimonials">Testimonials</a>
+        <a href="{{ url_for('index') }}#gallery" class="nav-link" data-i18n="nav_gallery">Gallery</a>
         <a href="{{ url_for('rules') }}" class="nav-link {% if request.path == '/rules' %}active{% endif %}" data-i18n="nav_rules">Rules & Regulations</a>
         <a href="{{ url_for('index') }}#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
         {% if current_user %}
@@ -151,6 +152,9 @@
           </a>
           <a href="{{ url_for('index') }}#testimonials" class="mobile-nav-item">
             <span class="mobile-nav-icon">⭐</span> <span data-i18n="nav_testimonials">Testimonials</span>
+          </a>
+          <a href="{{ url_for('index') }}#gallery" class="mobile-nav-item">
+            <span class="mobile-nav-icon">📸</span> <span data-i18n="nav_gallery">Pool Gallery</span>
           </a>
           <a href="{{ url_for('rules') }}" class="mobile-nav-item {% if request.path == '/rules' %}active{% endif %}">
             <span class="mobile-nav-icon">📋</span> <span data-i18n="nav_rules">Rules &amp; Regulations</span>

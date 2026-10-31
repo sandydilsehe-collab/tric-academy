@@ -87,6 +87,7 @@
       nav_batches: "Batches",
       nav_fees: "Fees",
       nav_testimonials: "Testimonials",
+      nav_gallery: "Gallery",
       nav_rules: "Rules & Regulations",
       nav_contact: "Contact",
       nav_login: "Login",

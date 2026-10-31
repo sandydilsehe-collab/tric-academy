@@ -328,6 +328,125 @@
     </div>
   </section>
 
+  
+  <!-- Section: Academy Life & Pool Gallery -->
+  <section id="gallery" style="background: var(--bg-alt); padding: 5rem 1.5rem; border-top: 1px solid var(--border-hairline); border-bottom: 1px solid var(--border-hairline);">
+    <div class="container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2.5rem;">
+        <div>
+          <span style="color: var(--brand-primary); font-weight: 700; text-transform: uppercase; font-size: 0.825rem; letter-spacing: 0.1em; display: block; margin-bottom: 0.35rem;">Live Campus &amp; Training</span>
+          <h2 style="font-size: 2.25rem; margin: 0; color: var(--text-main);">Academy Life &amp; Pool Facility</h2>
+          <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0; font-size: 1rem;">
+            Real training sessions, Olympic-grade pool maintenance, and swimmer coaching at TRIC Academy.
+          </p>
+        </div>
+        <a href="https://www.facebook.com/tricacademy/photos" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="background: #FFFFFF; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <span>📸 View Facebook Gallery</span>
+          <span style="font-size: 0.8rem;">↗</span>
+        </a>
+      </div>
+
+      <!-- Photo Cards Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.75rem;">
+        <!-- Photo 1: Panoramic Pool View -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_pool_panorama_hd.jpg') }}" alt="TRIC Academy Panoramic Pool View" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Facility Overview</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Full Indoor Pool &amp; Spectator Deck</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Fully covered, all-weather aquatic arena equipped with active water filtration and spacious poolside seating for parents.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo 2: Active Coaching Session -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_coaching_session.jpg') }}" alt="TRIC Academy Coaching Session" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Daily Batches</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Lane Instruction &amp; Technique Drills</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Certified swimming coaches providing stroke analysis, breathing mechanics, and paced lap sets across structured batches.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo 3: Indoor Lanes & Dividers -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_indoor_pool_lanes.jpg') }}" alt="TRIC Academy Indoor Pool Lanes" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Safe Learning</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Dedicated Learner &amp; Squad Lanes</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Anti-wave lane dividers separate beginner kickboard drills from competition endurance laps for maximum swimmer safety.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo 4: 1-on-1 Swimmer Mentorship -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_coach_student_guiding.jpg') }}" alt="TRIC Academy Coach Mentorship" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Personalized Focus</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Individual Attention &amp; Confidence</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Experienced trainers inside the water with beginners to conquer fear of deep water and build smooth propulsion.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo 5: Toddler Champions -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_toddler_champion.jpg') }}" alt="TRIC Academy Toddler Program" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Early Cadets</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Toddler &amp; Kids Swimming Programs</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Proven foundation courses starting from age 3 with warm, patient guidance and certified life-saving equipment.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo 6: Starting Blocks & Diving Practice -->
+        <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; flex-direction: column;">
+          <div style="width: 100%; height: 230px; overflow: hidden; background: #0F172A; position: relative;">
+            <img src="{{ url_for('static', filename='images/gallery/tric_diving_lineup.jpg') }}" alt="TRIC Academy Diving Practice" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.75); color: #FFFFFF; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px);">Squad Drills</span>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h4 style="margin: 0 0 0.4rem 0; font-size: 1.1rem; color: var(--text-main);">Diving Technique &amp; Race Readiness</h4>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">
+                Advanced students practice hydrodynamic streamlines, race starts, flip turns, and time trials for district aquatic events.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Section 5: Contact Details -->
   <section id="contact" class="container" style="padding: 5rem 1.5rem;">
     <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem;">
@@ -348,7 +467,7 @@
           Tirupur - 641 652, Tamil Nadu, India.
         </p>
         <div style="margin-top: 1rem;">
-          <a href="https://maps.google.com/?q=11%C2%B008%2730.0%22N%2077%C2%B018%2721.2%22E" target="_blank" rel="noopener noreferrer" style="color: var(--brand-primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+          <a href="https://www.google.com/maps/place/TRIC+ACADEMY/@11.1406636,77.3034911,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba9072291ec0055:0xa8cab5d66858c19a!8m2!3d11.1406636!4d77.3034911" target="_blank" rel="noopener noreferrer" style="color: var(--brand-primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
             Get Directions on Maps →
           </a>
         </div>
@@ -392,20 +511,20 @@
             85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur - 641 652, Tamil Nadu, India.
           </p>
         </div>
-        <a href="https://maps.google.com/?q=11%C2%B008%2730.0%22N%2077%C2%B018%2721.2%22E" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="font-weight: 600; white-space: nowrap;">
+        <a href="https://www.google.com/maps/place/TRIC+ACADEMY/@11.1406636,77.3034911,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba9072291ec0055:0xa8cab5d66858c19a!8m2!3d11.1406636!4d77.3034911" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="font-weight: 600; white-space: nowrap;">
           🗺️ Open in Google Maps ↗
         </a>
       </div>
 
-      <div class="map-responsive-wrapper" style="position: relative; width: 100%; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-hairline); box-shadow: var(--shadow-sm); min-height: 380px;">
+      <div class="map-responsive-wrapper" style="position: relative; width: 100%; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-hairline); box-shadow: var(--shadow-sm); min-height: 450px;">
         <iframe
-          src="https://maps.google.com/maps?q=11%C2%B008%2730.0%22N%2077%C2%B018%2721.2%22E&t=&z=17&ie=UTF8&iwloc=&output=embed"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3231.611353791329!2d77.30349107407768!3d11.140663589031089!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba9072291ec0055%3A0xa8cab5d66858c19a!2sTRIC%20ACADEMY!5e1!3m2!1sen!2sin!4v1793464978173!5m2!1sen!2sin"
           width="100%"
-          height="380"
-          style="border:0; width: 100%; height: 380px; display: block;"
+          height="450"
+          style="border:0; width: 100%; height: 450px; display: block;"
           allowfullscreen=""
           loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
+          referrerpolicy="strict-origin-when-cross-origin"
           title="TRIC Academy Location Map">
         </iframe>
       </div>
