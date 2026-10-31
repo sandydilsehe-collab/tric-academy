@@ -63,16 +63,16 @@
     <div class="paper-subheader">
       <div style="width: 140px;"></div> <!-- Spacer to center title -->
       <div class="paper-title-group">
-        <div class="paper-title-main">SWIMMING</div>
-        <div class="paper-title-sub">APPLICATION FORM FOR ENTRY PASS</div>
+        <div class="paper-title-main" data-i18n="app_swimming">SWIMMING</div>
+        <div class="paper-title-sub" data-i18n="app_form_title">APPLICATION FORM FOR ENTRY PASS</div>
       </div>
       <div class="paper-meta-right">
         <div class="meta-field-row">
-          <span>NO</span>
+          <span data-i18n="app_no_label">NO</span>
           <div class="meta-input-line">{{ app_no or (applicant.app_no if applicant else '') }}</div>
         </div>
         <div class="meta-field-row">
-          <span>DATE</span>
+          <span data-i18n="app_date_label">DATE</span>
           <div class="meta-input-line">{{ today_date or (applicant.application_date if applicant else '') }}</div>
         </div>
       </div>
@@ -98,7 +98,7 @@
             <img src="" alt="Preview" class="photo-preview-img" id="photoPreview" style="display: none;">
             <div id="photoPlaceholder">
               <div style="font-size: 1.5rem; color: #9CA3AF; margin-bottom: 2px;">📷</div>
-              <span class="photo-slot-text">PASSPORT SIZE PHOTO</span>
+              <span class="photo-slot-text" data-i18n="app_photo_text">PASSPORT SIZE PHOTO</span>
               <span style="font-size: 0.65rem; color: var(--brand-primary); font-weight: 600; display: block; margin-top: 2px; text-decoration: underline;">Click to Upload</span>
               <span style="font-size: 0.58rem; color: #9CA3AF; display: block;">(or submit 2 photos at office)</span>
             </div>
@@ -110,7 +110,7 @@
         <div class="paper-rows-list">
           <!-- Row 1: Name of Applicant -->
           <div class="paper-row">
-            <label class="paper-label" for="applicantNameInput">NAME OF THE APPLICANT</label>
+            <label class="paper-label" for="applicantNameInput" data-i18n="app_name_label">NAME OF THE APPLICANT</label>
             <div class="paper-input-wrap">
               <input type="text" id="applicantNameInput" name="name" class="paper-line-input"
                      value="{{ applicant.name if applicant else '' }}"
@@ -121,7 +121,7 @@
 
           <!-- Row 2: Address with Pin Code on Right -->
           <div class="paper-row" style="align-items: flex-start;">
-            <label class="paper-label" for="addressInput">ADDRESS</label>
+            <label class="paper-label" for="addressInput" data-i18n="app_address_label">ADDRESS</label>
             <div class="paper-input-wrap">
               <textarea id="addressInput" name="address" rows="2" class="paper-multiline-input"
                         placeholder="House / Door No., Street Name, Area" required
@@ -137,7 +137,7 @@
 
           <!-- Row 3: Contact No -->
           <div class="paper-row">
-            <label class="paper-label" for="phoneInput">CONTACT NO</label>
+            <label class="paper-label" for="phoneInput" data-i18n="app_phone_label">CONTACT NO</label>
             <div class="paper-input-wrap">
               <input type="tel" id="phoneInput" name="phone" class="paper-line-input"
                      value="{{ applicant.phone if applicant else '' }}"
@@ -147,7 +147,7 @@
 
           <!-- Row 4: Email ID -->
           <div class="paper-row">
-            <label class="paper-label" for="emailInput">EMAIL ID</label>
+            <label class="paper-label" for="emailInput" data-i18n="app_email_label">EMAIL ID</label>
             <div class="paper-input-wrap">
               <input type="email" id="emailInput" name="email" class="paper-line-input"
                      value="{{ applicant.email if applicant else '' }}"
@@ -160,7 +160,7 @@
         <div class="paper-rows-list full-width-below">
           <!-- Row 5: Age & Date of Birth Digit Boxes -->
           <div class="paper-row">
-            <label class="paper-label">AGE &amp; DATE OF BIRTH</label>
+            <label class="paper-label" data-i18n="app_age_dob_label">AGE &amp; DATE OF BIRTH</label>
             <div class="paper-input-wrap dob-age-row">
               <div class="age-box-wrap">
                 <span style="font-size: 0.75rem; font-weight: 700;">AGE:</span>
@@ -194,7 +194,7 @@
           <!-- Row 6: Guardian/Parent details (conditional for minors <18) -->
           <div id="minorSection" style="display: {% if applicant and applicant.age and applicant.age < 18 %}flex{% else %}none{% endif %}; flex-direction: column; gap: 0.65rem;">
             <div class="paper-row">
-              <label class="paper-label" for="guardianInput">NAME OF GAURDIAN/PARENT<br><span style="font-size: 0.65rem; font-weight: 600;">(IN CASE OF MINOR)</span></label>
+              <label class="paper-label" for="guardianInput" data-i18n="app_guardian_label">NAME OF GAURDIAN/PARENT<br><span style="font-size: 0.65rem; font-weight: 600;">(IN CASE OF MINOR)</span></label>
               <div class="paper-input-wrap">
                 <input type="text" id="guardianInput" name="guardian_name" class="paper-line-input"
                        value="{{ applicant.guardian_name if applicant else '' }}"
@@ -203,7 +203,7 @@
             </div>
 
             <div class="paper-row">
-              <label class="paper-label" for="occupationInput">OCCUPATION / PARENT</label>
+              <label class="paper-label" for="occupationInput" data-i18n="app_occupation_label">OCCUPATION / PARENT</label>
               <div class="paper-input-wrap">
                 <input type="text" id="occupationInput" name="guardian_occupation" class="paper-line-input"
                        value="{{ applicant.guardian_occupation if applicant else '' }}"
@@ -214,7 +214,7 @@
 
           <!-- Row 7: Swimming Experience -->
           <div class="paper-row">
-            <label class="paper-label">SWIMMING EXPERIENCE (IF ANY)</label>
+            <label class="paper-label" data-i18n="app_experience_label">SWIMMING EXPERIENCE (IF ANY)</label>
             <div class="paper-input-wrap">
               <input type="text" name="experience" class="paper-line-input"
                      value="{{ applicant.experience if applicant else '' }}"
@@ -224,20 +224,20 @@
 
           <!-- Row 8: Type of Pass Required -->
           <div class="paper-row">
-            <label class="paper-label">TYPE OF PASS REQUIRED</label>
+            <label class="paper-label" data-i18n="app_pass_type_label">TYPE OF PASS REQUIRED</label>
             <div class="paper-input-wrap">
               <div class="paper-choice-group">
                 <label class="paper-choice-item">
                   <input type="radio" name="pass_type_requested" value="learn_to_swim"
                          {% if not applicant or applicant.pass_type_requested == 'learn_to_swim' %}checked{% endif %}
                          {% if is_view_mode %}disabled{% endif %}>
-                  <span>LEARN TO SWIM</span>
+                  <span data-i18n="app_learn_to_swim">LEARN TO SWIM</span>
                 </label>
                 <label class="paper-choice-item">
                   <input type="radio" name="pass_type_requested" value="competition"
                          {% if applicant and applicant.pass_type_requested == 'competition' %}checked{% endif %}
                          {% if is_view_mode %}disabled{% endif %}>
-                  <span>COMPETITION</span>
+                  <span data-i18n="app_competition">COMPETITION</span>
                 </label>
               </div>
             </div>
@@ -261,7 +261,7 @@
                   <input type="radio" id="sponsoredNo" name="sponsored" value="no"
                          {% if not applicant or not applicant.sponsored %}checked{% endif %}
                          {% if is_view_mode %}disabled{% endif %}>
-                  <span>NO</span>
+                  <span data-i18n="app_no_label">NO</span>
                 </label>
               </div>
               <div id="sponsorUploadWrap" style="display: {% if applicant and applicant.sponsored %}block{% else %}none{% endif %}; margin-top: 6px;">
@@ -290,7 +290,7 @@
                 </label>
                 <label class="paper-choice-item">
                   <input type="radio" name="has_disease" value="no" checked {% if is_view_mode %}disabled{% endif %}>
-                  <span>NO</span>
+                  <span data-i18n="app_no_label">NO</span>
                 </label>
               </div>
               <!-- Senior Citizen Medical Notice (Conditional for >50 YRS) -->
@@ -334,10 +334,10 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
               <div>
                 <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--brand-primary); letter-spacing: 0.05em; display: block;">Mandatory Academy Policy Step</span>
-                <strong style="font-size: 0.875rem; color: #0F172A;">32 General Rules &amp; Regulations of TRIC Academy</strong>
+                <strong style="font-size: 0.875rem; color: #0F172A;" data-i18n="app_rules_section_title">32 General Rules &amp; Regulations of TRIC Academy</strong>
               </div>
               <button type="button" onclick="openRulesModal()" class="btn btn-secondary btn-sm" style="border-color: var(--brand-primary); color: var(--brand-primary);">
-                📖 Read &amp; Review 32 Rules
+                <span data-i18n="app_btn_read_rules">📖 Read &amp; Review 32 Rules</span>
               </button>
             </div>
 
@@ -346,7 +346,7 @@
                      {% if applicant and applicant.rules_agreed %}checked{% endif %}
                      {% if not is_view_mode %}required{% else %}disabled{% endif %} style="width: 18px; height: 18px; margin-top: 2px;">
               <label for="rulesAgreed" style="font-size: 0.825rem; font-weight: 600; color: #1E293B;">
-                I have read, understood, and accept all 32 Rules &amp; Regulations of TRIC Academy – School of Swimming.
+                <span data-i18n="app_rules_agreed_text">I have read, understood, and accept all 32 Rules &amp; Regulations of TRIC Academy – School of Swimming.</span>
               </label>
             </div>
 
@@ -566,12 +566,17 @@
   <div style="background: #FFFFFF; border-radius: var(--radius-md); max-width: 720px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden;">
     
     <!-- Modal Header -->
-    <div style="background-color: var(--brand-primary); color: #FFFFFF; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background-color: var(--brand-primary); color: #FFFFFF; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
       <div>
-        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #E6FFFA; letter-spacing: 0.05em;">TRIC Academy – School of Swimming</div>
-        <h3 style="font-size: 1.15rem; color: #FFFFFF; margin: 0;">32 General Rules &amp; Regulations</h3>
+        <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #E6FFFA; letter-spacing: 0.05em;" data-i18n="modal_rules_super">TRIC Academy – School of Swimming</div>
+        <h3 style="font-size: 1.15rem; color: #FFFFFF; margin: 0;" data-i18n="modal_rules_title">32 General Rules &amp; Regulations</h3>
       </div>
-      <button type="button" onclick="closeRulesModal()" style="background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <button type="button" class="lang-toggle-btn" onclick="toggleTricLanguage()" style="background: rgba(255,255,255,0.18); color: #FFFFFF; border-color: rgba(255,255,255,0.35); font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+          🌐 <span id="modalLangLabel">தமிழ் / English</span>
+        </button>
+        <button type="button" onclick="closeRulesModal()" style="background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
     </div>
 
     <!-- Modal Body (32 Rules List) -->
@@ -580,7 +585,7 @@
         Please review all 32 academy rules carefully. Your confirmation is required before an entry pass or user account can be created.
       </p>
 
-      <ol style="list-style-position: outside; margin-left: 1.5rem; font-size: 0.825rem; line-height: 1.8; color: #1F2937;">
+      <ol class="tric-rules-list" style="list-style-position: outside; margin-left: 1.5rem; font-size: 0.825rem; line-height: 1.8; color: #1F2937;">
         <li>All the pass holders should possess proper identity card issued from the TRIC ACADEMY office on production of two passport size photographs and on payment of Rs.50/-. Membership card will be brought every day and will be shown on demand from Authorised officer. Entry to the pool will be made with only IDENTITY CARD.</li>
         <li>Swimmers may use the pool at their own risk. TRIC and its officials will not be responsible for any theft, accident, injury, covid 19 and loss of life occurring in the swimming and premises. TRIC ACADEMY AND Officials will not be responsible for any injury/loss of life during the playing period and on compensation or claim will be entertained.</li>
         <li>All instruction imposed by TRIC ACADEMY or its authorized representative will be strictly adhered to.</li>
@@ -620,11 +625,11 @@
     <div style="background-color: #F8FAFC; border-top: 1px solid var(--border-hairline); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.825rem; font-weight: 700; color: #0F172A;">
         <input type="checkbox" id="modalRulesCheck" style="width: 18px; height: 18px;">
-        <span>I have read and agree to all 32 Academy Rules</span>
+        <span data-i18n="modal_rules_agree_label">I have read and agree to all 32 Academy Rules</span>
       </label>
       <div style="display: flex; gap: 0.5rem;">
-        <button type="button" onclick="closeRulesModal()" class="btn btn-secondary btn-sm">Close</button>
-        <button type="button" onclick="confirmRulesFromModal()" class="btn btn-primary btn-sm">Confirm &amp; Acknowledge</button>
+        <button type="button" onclick="closeRulesModal()" class="btn btn-secondary btn-sm" data-i18n="modal_rules_close">Close</button>
+        <button type="button" onclick="confirmRulesFromModal()" class="btn btn-primary btn-sm" data-i18n="modal_rules_confirm">Confirm &amp; Acknowledge</button>
       </div>
     </div>
 

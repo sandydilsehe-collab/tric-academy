@@ -20,37 +20,43 @@
         <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" class="brand-logo-img">
         <div>
           <span class="brand-name">TRIC ACADEMY</span>
-          <span class="brand-sub">School of Swimming</span>
+          <span class="brand-sub" data-i18n="nav_brand_sub">School of Swimming</span>
         </div>
       </a>
 
       <!-- Zone 2: Single-line Navigation Links -->
       <nav class="nav-links">
-        <a href="{{ url_for('index') }}#about" class="nav-link">About</a>
-        <a href="{{ url_for('index') }}#batches" class="nav-link">Batches</a>
-        <a href="{{ url_for('index') }}#fees" class="nav-link">Fees</a>
-        <a href="{{ url_for('index') }}#testimonials" class="nav-link">Testimonials</a>
-        <a href="{{ url_for('rules') }}" class="nav-link {% if request.path == '/rules' %}active{% endif %}">Rules & Regulations</a>
-        <a href="{{ url_for('index') }}#contact" class="nav-link">Contact</a>
+        <a href="{{ url_for('index') }}#about" class="nav-link" data-i18n="nav_about">About</a>
+        <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
+        <a href="{{ url_for('index') }}#fees" class="nav-link" data-i18n="nav_fees">Fees</a>
+        <a href="{{ url_for('index') }}#testimonials" class="nav-link" data-i18n="nav_testimonials">Testimonials</a>
+        <a href="{{ url_for('rules') }}" class="nav-link {% if request.path == '/rules' %}active{% endif %}" data-i18n="nav_rules">Rules & Regulations</a>
+        <a href="{{ url_for('index') }}#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
         {% if current_user %}
           {% if current_user.role == 'member' %}
-            <a href="{{ url_for('member_dashboard') }}" class="nav-link {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}">🏊 My Dashboard</a>
-            <a href="{{ url_for('renew_membership') }}" class="nav-link {% if request.path == '/renew' %}active{% endif %}">⚡ Renew Pass</a>
+            <a href="{{ url_for('member_dashboard') }}" class="nav-link {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}" data-i18n="nav_dashboard">🏊 My Dashboard</a>
+            <a href="{{ url_for('renew_membership') }}" class="nav-link {% if request.path == '/renew' %}active{% endif %}" data-i18n="nav_renew">⚡ Renew Pass</a>
           {% endif %}
           {% if current_user.role == 'admin' %}
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if '/admin' in request.path %}active{% endif %}">Admin Hub</a>
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if '/admin' in request.path %}active{% endif %}" data-i18n="nav_admin">Admin Hub</a>
           {% endif %}
           {% if current_user.role in ('admin', 'coach') %}
-            <a href="{{ url_for('attendance_tool') }}" class="nav-link {% if request.path == '/attendance' %}active{% endif %}">Attendance</a>
+            <a href="{{ url_for('attendance_tool') }}" class="nav-link {% if request.path == '/attendance' %}active{% endif %}" data-i18n="nav_attendance">Attendance</a>
           {% endif %}
           {% if current_user.role in ('admin', 'coach') or current_user.is_competition or current_user.pass_type_requested == 'competition' %}
-            <a href="{{ url_for('competition_hub') }}" class="nav-link {% if request.path == '/competition' %}active{% endif %}">Competition Hub</a>
+            <a href="{{ url_for('competition_hub') }}" class="nav-link {% if request.path == '/competition' %}active{% endif %}" data-i18n="nav_competition">Competition Hub</a>
           {% endif %}
         {% endif %}
       </nav>
 
       <!-- Zone 3: Primary Action / User Profile (Desktop & Mobile) -->
       <div class="nav-actions">
+        <!-- Quick English / தமிழ் Language Switcher Toggle -->
+        <button type="button" class="lang-toggle-btn" id="langToggleBtn" onclick="toggleTricLanguage()" title="Switch Language / மொழியை மாற்றுக" aria-label="Toggle language">
+          <span class="lang-icon">🌐</span>
+          <span class="lang-label" id="langToggleLabel">தமிழ்</span>
+        </button>
+
         {% if current_user %}
           <!-- Notification Bell Dropdown -->
           <div class="notif-dropdown-wrapper">
@@ -99,12 +105,12 @@
             <span>{{ current_user.name.split()[0] }}</span>
             <span class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">({{ current_user.role|capitalize }})</span>
           </a>
-          <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm nav-desktop-logout" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+          <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm nav-desktop-logout" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out" data-i18n="nav_logout">
             🚪 Log Out
           </a>
         {% else %}
-          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm nav-desktop-login">Login</a>
-          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm nav-desktop-apply">Apply for Pass</a>
+          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm nav-desktop-login" data-i18n="nav_login">Login</a>
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm nav-desktop-apply" data-i18n="nav_apply">Apply for Pass</a>
         {% endif %}
 
         <!-- Mobile Hamburger Menu Button -->
@@ -123,24 +129,34 @@
           <span class="mobile-nav-title">Menu Navigation</span>
           <button type="button" class="mobile-nav-close" id="mobileNavCloseBtn" aria-label="Close menu">&times;</button>
         </div>
+
+        <!-- Mobile Quick Language Switcher -->
+        <div class="mobile-lang-row">
+          <span>🌐 Language / மொழி:</span>
+          <button type="button" class="lang-toggle-btn" id="mobileLangToggleBtn" onclick="toggleTricLanguage()">
+            <span class="lang-icon">🌐</span>
+            <span class="lang-label" id="mobileLangToggleLabel">தமிழ்</span>
+          </button>
+        </div>
+
         <nav class="mobile-links-list">
           <a href="{{ url_for('index') }}#about" class="mobile-nav-item">
-            <span class="mobile-nav-icon">🏊</span> About Academy
+            <span class="mobile-nav-icon">🏊</span> <span data-i18n="nav_about">About Academy</span>
           </a>
           <a href="{{ url_for('index') }}#batches" class="mobile-nav-item">
-            <span class="mobile-nav-icon">⏱️</span> Batch Schedules
+            <span class="mobile-nav-icon">⏱️</span> <span data-i18n="nav_batches">Batch Schedules</span>
           </a>
           <a href="{{ url_for('index') }}#fees" class="mobile-nav-item">
-            <span class="mobile-nav-icon">💳</span> Membership Plans
+            <span class="mobile-nav-icon">💳</span> <span data-i18n="nav_fees">Membership Plans</span>
           </a>
           <a href="{{ url_for('index') }}#testimonials" class="mobile-nav-item">
-            <span class="mobile-nav-icon">⭐</span> Testimonials
+            <span class="mobile-nav-icon">⭐</span> <span data-i18n="nav_testimonials">Testimonials</span>
           </a>
           <a href="{{ url_for('rules') }}" class="mobile-nav-item {% if request.path == '/rules' %}active{% endif %}">
-            <span class="mobile-nav-icon">📋</span> Rules &amp; Regulations
+            <span class="mobile-nav-icon">📋</span> <span data-i18n="nav_rules">Rules &amp; Regulations</span>
           </a>
           <a href="{{ url_for('index') }}#contact" class="mobile-nav-item">
-            <span class="mobile-nav-icon">📍</span> Contact &amp; Location
+            <span class="mobile-nav-icon">📍</span> <span data-i18n="nav_contact">Contact &amp; Location</span>
           </a>
 
           {% if current_user %}
@@ -148,25 +164,25 @@
             <div class="mobile-nav-section-label">Account &amp; Services</div>
             {% if current_user.role == 'member' %}
               <a href="{{ url_for('member_dashboard') }}" class="mobile-nav-item {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}">
-                <span class="mobile-nav-icon">🏊</span> My Dashboard
+                <span class="mobile-nav-icon">🏊</span> <span data-i18n="nav_dashboard">My Dashboard</span>
               </a>
               <a href="{{ url_for('renew_membership') }}" class="mobile-nav-item {% if request.path == '/renew' %}active{% endif %}">
-                <span class="mobile-nav-icon">⚡</span> Renew Pass
+                <span class="mobile-nav-icon">⚡</span> <span data-i18n="nav_renew">Renew Pass</span>
               </a>
             {% endif %}
             {% if current_user.role == 'admin' %}
               <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item {% if '/admin' in request.path %}active{% endif %}">
-                <span class="mobile-nav-icon">⚙️</span> Admin Hub
+                <span class="mobile-nav-icon">⚙️</span> <span data-i18n="nav_admin">Admin Hub</span>
               </a>
             {% endif %}
             {% if current_user.role in ('admin', 'coach') %}
               <a href="{{ url_for('attendance_tool') }}" class="mobile-nav-item {% if request.path == '/attendance' %}active{% endif %}">
-                <span class="mobile-nav-icon">✅</span> Attendance Tool
+                <span class="mobile-nav-icon">✅</span> <span data-i18n="nav_attendance">Attendance Tool</span>
               </a>
             {% endif %}
             {% if current_user.role in ('admin', 'coach') or current_user.is_competition or current_user.pass_type_requested == 'competition' %}
               <a href="{{ url_for('competition_hub') }}" class="mobile-nav-item {% if request.path == '/competition' %}active{% endif %}">
-                <span class="mobile-nav-icon">🏆</span> Competition Hub
+                <span class="mobile-nav-icon">🏆</span> <span data-i18n="nav_competition">Competition Hub</span>
               </a>
             {% endif %}
           {% endif %}
@@ -179,16 +195,16 @@
                 <strong style="display:block; color: var(--text-main); font-size: 0.9rem;">{{ current_user.name }}</strong>
                 <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: capitalize;">Role: {{ current_user.role }}</span>
               </div>
-              <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; color: #FFFFFF;">
+              <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; color: #FFFFFF;" data-i18n="nav_logout">
                 🚪 Log Out
               </a>
             </div>
           {% else %}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-              <a href="{{ url_for('login') }}" class="btn btn-secondary" style="font-weight: 700; text-align: center; justify-content: center;">
+              <a href="{{ url_for('login') }}" class="btn btn-secondary" style="font-weight: 700; text-align: center; justify-content: center;" data-i18n="nav_login">
                 🔑 Login
               </a>
-              <a href="{{ url_for('apply_pass') }}" class="btn btn-primary" style="font-weight: 700; text-align: center; justify-content: center; box-shadow: 0 4px 12px rgba(31, 138, 138, 0.35);">
+              <a href="{{ url_for('apply_pass') }}" class="btn btn-primary" style="font-weight: 700; text-align: center; justify-content: center; box-shadow: 0 4px 12px rgba(31, 138, 138, 0.35);" data-i18n="nav_apply">
                 🏊 Apply Pass
               </a>
             </div>
@@ -231,16 +247,16 @@
       <div class="footer-col">
         <h5>Quick Links</h5>
         <ul class="footer-links">
-          <li><a href="{{ url_for('index') }}#about">About Academy</a></li>
-          <li><a href="{{ url_for('index') }}#batches">Batch Schedules</a></li>
-          <li><a href="{{ url_for('index') }}#fees">Membership Fees</a></li>
-          <li><a href="{{ url_for('index') }}#testimonials">Member Testimonials</a></li>
-          <li><a href="{{ url_for('rules') }}">Pool Rules & Safety</a></li>
+          <li><a href="{{ url_for('index') }}#about" data-i18n="nav_about">About Academy</a></li>
+          <li><a href="{{ url_for('index') }}#batches" data-i18n="nav_batches">Batch Schedules</a></li>
+          <li><a href="{{ url_for('index') }}#fees" data-i18n="nav_fees">Membership Fees</a></li>
+          <li><a href="{{ url_for('index') }}#testimonials" data-i18n="nav_testimonials">Member Testimonials</a></li>
+          <li><a href="{{ url_for('rules') }}" data-i18n="nav_rules">Pool Rules & Safety</a></li>
           {% if current_user %}
-            <li><a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}">My Dashboard</a></li>
-            <li><a href="{{ url_for('logout') }}" style="color: #F87171; font-weight: 600;">🚪 Log Out</a></li>
+            <li><a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" data-i18n="nav_dashboard">My Dashboard</a></li>
+            <li><a href="{{ url_for('logout') }}" style="color: #F87171; font-weight: 600;" data-i18n="nav_logout">🚪 Log Out</a></li>
           {% else %}
-            <li><a href="{{ url_for('apply_pass') }}">Apply for Entry Pass</a></li>
+            <li><a href="{{ url_for('apply_pass') }}" data-i18n="nav_apply">Apply for Entry Pass</a></li>
           {% endif %}
         </ul>
       </div>
@@ -261,6 +277,7 @@
     </div>
   </footer>
 
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   {% block extra_scripts %}{% endblock %}
 </body>

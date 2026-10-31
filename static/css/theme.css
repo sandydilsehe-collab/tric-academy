@@ -1076,3 +1076,200 @@ body.nav-open {
   margin-top: 0.25rem;
 }
 
+
+/* ==========================================================================
+   Language Toggle Button (English / தமிழ்)
+   ========================================================================== */
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.lang-toggle-btn:hover {
+  background: #F1F5F9;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  transform: translateY(-1px);
+}
+
+.lang-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.lang-toggle-btn .lang-icon {
+  font-size: 1rem;
+}
+
+.lang-toggle-btn .lang-label {
+  letter-spacing: 0.02em;
+}
+
+/* Mobile drawer lang toggle */
+.mobile-lang-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.mobile-lang-row span {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Family Accounts & Linked Child Pass Switcher
+   ========================================================================== */
+.family-switcher-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.family-switcher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.family-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+
+.family-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid #E2E8F0;
+  background: #F8FAFC;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.family-tab-btn:hover {
+  border-color: var(--brand-primary);
+  background: #F0FDFA;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(31, 138, 138, 0.1);
+}
+
+.family-tab-btn.active {
+  border-color: var(--brand-primary);
+  background: #F0FDFA;
+  box-shadow: 0 2px 6px rgba(31, 138, 138, 0.15);
+}
+
+.family-tab-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.family-tab-btn.active .family-tab-avatar {
+  border-color: var(--brand-primary);
+  background: #CCFBF1;
+}
+
+.family-tab-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-tab-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.family-role-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #E2E8F0;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.family-role-badge.child {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.family-tab-meta {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.family-active-indicator {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #CCFBF1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.family-active-banner {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

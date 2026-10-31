@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Add Child Pass – TRIC Academy{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 820px; padding-top: 2.5rem; padding-bottom: 5rem;">
+
+  <!-- Breadcrumb & Back -->
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+      ← Back to Family Dashboard
+    </a>
+    <span style="font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); text-transform: uppercase; letter-spacing: 0.05em;">
+      👨‍👩‍👧 Family Account Management
+    </span>
+  </div>
+
+  <div class="card" style="padding: 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
+    
+    <!-- Header -->
+    <div style="border-bottom: 2px solid var(--border-hairline); padding-bottom: 1.25rem; margin-bottom: 1.75rem;">
+      <h1 style="font-size: 1.75rem; margin-bottom: 0.35rem; color: var(--text-main);">
+        🏊 Add Child Swimming Pass
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+        Link your child's swimming training pass to your parent account (<strong>{{ parent.name }}</strong>). You can monitor their batch timings, digital identity card, attendance, and renewals from your single login.
+      </p>
+    </div>
+
+    <!-- Parent Family Details Card (Auto-inherited) -->
+    <div style="background-color: var(--surface-subtle); border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <strong style="font-size: 0.85rem; text-transform: uppercase; color: var(--brand-primary); letter-spacing: 0.05em;">
+          ✓ Inherited Family Contact &amp; Guardian Info
+        </strong>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Managed by Parent</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Parent / Guardian:</span>
+          <strong>{{ parent.name }}</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Contact Phone:</span>
+          <span class="font-mono">📞 {{ parent.phone }}</span>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Primary Family Email:</span>
+          <span class="font-mono">✉️ {{ parent.email }}</span>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <span style="color: var(--text-muted); font-size: 0.75rem; display: block;">Residential Address:</span>
+          <span>{{ parent.address or 'Velampalayam, Tirupur' }} {% if parent.pincode %}– {{ parent.pincode }}{% endif %}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Child Registration Form -->
+    <form method="POST" action="{{ url_for('member_add_child') }}" enctype="multipart/form-data">
+      
+      <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+        <span>👶</span> Child Applicant Information
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+        <!-- Child Full Name -->
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Child's Full Name <span style="color: var(--danger);">*</span>
+          </label>
+          <input type="text" name="name" required placeholder="e.g. AARAV SANTHOSH"
+                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 600; text-transform: uppercase;">
+        </div>
+
+        <!-- Date of Birth -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Date of Birth
+          </label>
+          <input type="date" id="childDob" name="dob" onchange="calculateChildAge(this.value)"
+                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem;">
+        </div>
+
+        <!-- Age -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Age (Years) <span style="color: var(--danger);">*</span>
+          </label>
+          <input type="number" id="childAge" name="age" min="4" max="17" placeholder="e.g. 9" required
+                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 600;">
+        </div>
+
+        <!-- Gender -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Gender
+          </label>
+          <select name="gender" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff;">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <!-- Pass Type Requested -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Requested Training Squad <span style="color: var(--danger);">*</span>
+          </label>
+          <select name="pass_type_requested" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff;">
+            <option value="learn_to_swim">Learn to Swim (Beginner / Intermediate)</option>
+            <option value="competition">Competition Squad (Advanced Swimmer)</option>
+          </select>
+        </div>
+
+        <!-- Batch Assignment -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Preferred Batch Schedule <span style="color: var(--danger);">*</span>
+          </label>
+          <select name="batch_id" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff;">
+            {% for b in batches %}
+              <option value="{{ b.id }}">
+                {{ b.name }} ({{ b.start_time }} - {{ b.end_time }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Initial Plan Duration -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Initial Pass Duration
+          </label>
+          <select name="plan_id" style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff;">
+            {% for p in plans %}
+              <option value="{{ p.id }}">
+                {{ p.name }} (₹{{ '{:,.0f}'.format(p.fee_amount) }} · {{ p.duration_days }} Days)
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Passport Size Photo Upload -->
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Child's Passport Size Photo (for Official ID Card)
+          </label>
+          <input type="file" name="photo" accept="image/*"
+                 style="width: 100%; padding: 0.5rem; border: 1.5px dashed #CBD5E1; border-radius: var(--radius-sm); background: #F8FAFC;">
+          <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">
+            Optional: You can upload now or submit 2 physical passport-size photos at the pool office.
+          </span>
+        </div>
+
+        <!-- Swimming Experience -->
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Prior Swimming Experience (if any)
+          </label>
+          <input type="text" name="experience" placeholder="e.g. Beginner, basic floating, 1 year coaching"
+                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem;">
+        </div>
+
+        <!-- Medical Notes -->
+        <div style="grid-column: 1 / -1;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            Medical Notes / Allergies (if any)
+          </label>
+          <input type="text" name="medical_notes" placeholder="None / No contagious conditions"
+                 style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); font-size: 0.95rem;">
+        </div>
+      </div>
+
+      <!-- Undertaking -->
+      <div style="margin-top: 1.5rem; padding: 1rem; background-color: #F8FAFC; border: 1px solid var(--border-hairline); border-radius: var(--radius-sm); margin-bottom: 2rem;">
+        <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
+          <input type="checkbox" required checked style="width: 18px; height: 18px; margin-top: 2px;">
+          <span>
+            As parent/guardian, I confirm that my child is medically fit for swimming training, and I agree that our family will abide by all <strong>32 General Rules &amp; Regulations</strong> of TRIC Academy – School of Swimming.
+          </span>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 1rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+        <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary" style="font-weight: 700; padding: 0.75rem 1.75rem; box-shadow: 0 4px 14px rgba(31, 138, 138, 0.4);">
+          🏊 Register &amp; Link Child Pass
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+function calculateChildAge(dobVal) {
+  if (!dobVal) return;
+  const dob = new Date(dobVal);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  if (age >= 0) {
+    document.getElementById('childAge').value = age;
+  }
+}
+</script>
+{% endblock %}

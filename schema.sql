@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT CHECK(role IN ('member', 'coach', 'admin')) NOT NULL DEFAULT 'member',
     status TEXT CHECK(status IN ('pending', 'approved', 'deactivated')) NOT NULL DEFAULT 'pending',
     name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    phone TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     dob DATE,
     age INTEGER,
@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS users (
     mock_otp TEXT,
     reset_token TEXT,
     reset_token_expiry DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    rules_confirmed_at DATETIME,
+    parent_id INTEGER REFERENCES users(id)
 );
 
 -- Batches Table
@@ -202,3 +204,8 @@ CREATE INDEX IF NOT EXISTS idx_users_role_status ON users(role, status);
 CREATE INDEX IF NOT EXISTS idx_memberships_end_date ON user_memberships(end_date, is_active);
 CREATE INDEX IF NOT EXISTS idx_race_swimmer ON race_records(swimmer_id, stroke);
 CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date, batch_id);
+
+-- Partial unique indexes for parent primary accounts (allowing linked child passes to share parent phone & email)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_primary_email ON users(email) WHERE parent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_primary_phone ON users(phone) WHERE parent_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_users_parent_id ON users(parent_id);

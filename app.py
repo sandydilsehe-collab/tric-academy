@@ -646,13 +646,7 @@ def apply_pass():
             flash('Name, email, and contact number are required.', 'error')
             return redirect(url_for('apply_pass'))
 
-        # Check existing account
-        existing = db.execute("SELECT id FROM users WHERE email = ? OR phone = ?", (email, phone)).fetchone()
-        if existing:
-            flash('An application or account with this email or phone number already exists.', 'error')
-            return redirect(url_for('apply_pass'))
-
-        # Calculate Age
+        # Calculate Age early for minor check
         age = None
         dob = None
         if dob_str:
@@ -662,6 +656,18 @@ def apply_pass():
                 age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
             except ValueError:
                 pass
+
+        # Check existing account
+        parent_id = None
+        existing = db.execute("SELECT id, name, role FROM users WHERE (email = ? OR phone = ?) AND parent_id IS NULL", (email, phone)).fetchone()
+        if existing:
+            if (age is not None and age < 18) or guardian_name:
+                parent_id = existing['id']
+            else:
+                flash('An application or account with this email or phone number already exists.', 'error')
+                return redirect(url_for('apply_pass'))
+
+# Age already calculated above
 
         if age is not None and age < 18 and (not guardian_name or not guardian_occupation):
             flash('Parent/Guardian details are mandatory for applicants under 18 years of age.', 'error')
@@ -709,15 +715,15 @@ def apply_pass():
                 dob, age, address, pincode, guardian_name, guardian_occupation,
                 experience, pass_type_requested, sponsored, sponsor_cert_filename,
                 photo_filename, health_declared, rules_agreed, rules_confirmed_at, signature_name,
-                place, application_date, email_verified, email_token, phone_verified, mock_otp
-            ) VALUES (?, 'member', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, ?, ?, 0, ?, ?, ?)
+                place, application_date, email_verified, email_token, phone_verified, mock_otp, parent_id
+            ) VALUES (?, 'member', 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, ?, ?, 0, ?, ?, ?, ?)
             """,
             (
                 app_no, name, email, phone, pwd_hash,
                 dob, age, address, pincode, guardian_name, guardian_occupation,
                 experience, pass_type, sponsored, sponsor_cert_filename,
                 photo_filename, health_declared, signature_name,
-                place, date.today(), email_token, phone_verified, mock_otp
+                place, date.today(), email_token, phone_verified, mock_otp, parent_id
             )
         )
         new_user_id = cursor.lastrowid
@@ -1020,14 +1026,79 @@ def reset_password(token):
 @app.route('/dashboard')
 @login_required
 def member_dashboard():
-    user = get_current_user()
-    if user['role'] == 'admin':
+    curr = get_current_user()
+    if curr['role'] == 'admin':
         return redirect(url_for('admin_dashboard'))
-    elif user['role'] == 'coach':
+    elif curr['role'] == 'coach':
         return redirect(url_for('attendance_tool'))
 
     db = get_db()
-    # Fetch recent attendance
+
+    # Determine primary parent account
+    parent_id = curr['parent_id'] or curr['id']
+    parent = db.execute("SELECT * FROM users WHERE id = ?", (parent_id,)).fetchone()
+
+    # Fetch all linked children passes under this parent
+    children = db.execute(
+        """
+        SELECT u.*, 
+               m.id AS membership_id, m.plan_id, m.batch_id, m.start_date, m.end_date, m.is_active AS membership_active,
+               b.name AS batch_name,
+               p.name AS plan_name, p.fee_amount,
+               o.id_card_number, o.pass_type_issued
+        FROM users u
+        LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+        LEFT JOIN batches b ON m.batch_id = b.id
+        LEFT JOIN plans p ON m.plan_id = p.id
+        LEFT JOIN office_use o ON u.id = o.user_id
+        WHERE u.parent_id = ?
+        ORDER BY u.id ASC
+        """,
+        (parent_id,)
+    ).fetchall()
+
+    # Determine active profile being viewed
+    view_id = request.args.get('view_id') or request.args.get('child_id')
+    active_user = None
+    if view_id:
+        if str(view_id) == str(parent['id']):
+            active_user = db.execute(
+                """
+                SELECT u.*, 
+                       m.id AS membership_id, m.plan_id, m.batch_id, m.start_date, m.end_date, m.is_active AS membership_active,
+                       b.name AS batch_name, b.is_competition,
+                       p.name AS plan_name, p.fee_amount
+                FROM users u
+                LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+                LEFT JOIN batches b ON m.batch_id = b.id
+                LEFT JOIN plans p ON m.plan_id = p.id
+                WHERE u.id = ?
+                """,
+                (parent['id'],)
+            ).fetchone()
+        else:
+            for ch in children:
+                if str(ch['id']) == str(view_id):
+                    active_user = ch
+                    break
+
+    if not active_user:
+        active_user = db.execute(
+            """
+            SELECT u.*, 
+                   m.id AS membership_id, m.plan_id, m.batch_id, m.start_date, m.end_date, m.is_active AS membership_active,
+                   b.name AS batch_name, b.is_competition,
+                   p.name AS plan_name, p.fee_amount
+            FROM users u
+            LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+            LEFT JOIN batches b ON m.batch_id = b.id
+            LEFT JOIN plans p ON m.plan_id = p.id
+            WHERE u.id = ?
+            """,
+            (curr['id'],)
+        ).fetchone()
+
+    # Fetch recent attendance for the active profile
     attendance_records = db.execute(
         """
         SELECT a.*, b.name AS batch_name
@@ -1036,49 +1107,210 @@ def member_dashboard():
         WHERE a.user_id = ?
         ORDER BY a.date DESC LIMIT 15
         """,
-        (user['id'],)
+        (active_user['id'],)
     ).fetchall()
 
     # Calculate days left
     days_left = None
-    if user['end_date']:
-        end_d = datetime.strptime(str(user['end_date']), '%Y-%m-%d').date()
+    if active_user['end_date']:
+        end_d = datetime.strptime(str(active_user['end_date']), '%Y-%m-%d').date()
         days_left = (end_d - date.today()).days
 
     # Fetch office use details for digital ID card
-    office = db.execute("SELECT * FROM office_use WHERE user_id = ?", (user['id'],)).fetchone()
+    office = db.execute("SELECT * FROM office_use WHERE user_id = ?", (active_user['id'],)).fetchone()
 
     # Recent payments
     payments = db.execute(
-        "SELECT * FROM payments WHERE user_id = ? ORDER BY payment_date DESC LIMIT 5",
-        (user['id'],)
+        """
+        SELECT * FROM payments 
+        WHERE user_id = ? OR user_id = ?
+        ORDER BY payment_date DESC LIMIT 5
+        """,
+        (active_user['id'], parent['id'])
     ).fetchall()
 
     return render_template(
         'member_dashboard.html',
-        user=user,
+        user=active_user,
+        active_user=active_user,
+        parent=parent,
+        children=children,
         attendance_records=attendance_records,
         days_left=days_left,
         office=office,
         payments=payments
     )
 
+@app.route('/member/add-child', methods=['GET', 'POST'])
+@login_required
+def member_add_child():
+    user = get_current_user()
+    if user['role'] != 'member':
+        flash('Only registered members or parents can add child passes.', 'warning')
+        return redirect(url_for('index'))
+
+    db = get_db()
+    parent_id = user['parent_id'] or user['id']
+    parent = db.execute("SELECT * FROM users WHERE id = ?", (parent_id,)).fetchone()
+    batches = db.execute("SELECT * FROM batches ORDER BY id ASC").fetchall()
+    plans = db.execute("SELECT * FROM plans ORDER BY fee_amount ASC").fetchall()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        dob_str = request.form.get('dob', '').strip()
+        age_raw = request.form.get('age', '').strip()
+        gender = request.form.get('gender', 'Male').strip()
+        pass_type = request.form.get('pass_type_requested', 'learn_to_swim').strip()
+        raw_batch_id = request.form.get('batch_id')
+        raw_plan_id = request.form.get('plan_id', 1)
+        experience = request.form.get('experience', '').strip()
+        medical_notes = request.form.get('medical_notes', '').strip()
+
+        if not name:
+            flash('Child full name is required.', 'error')
+            return redirect(url_for('member_add_child'))
+
+        try:
+            batch_id = int(raw_batch_id) if raw_batch_id else 1
+        except (ValueError, TypeError):
+            batch_id = 1
+
+        try:
+            plan_id = int(raw_plan_id) if raw_plan_id else 1
+        except (ValueError, TypeError):
+            plan_id = 1
+
+        # Calculate age
+        age = None
+        dob = None
+        if dob_str:
+            try:
+                dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                today = date.today()
+                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+            except ValueError:
+                pass
+        if age is None and age_raw:
+            try:
+                age = int(age_raw)
+            except ValueError:
+                age = 10
+
+        # Photo upload handling
+        photo_filename = None
+        photo_file = request.files.get('photo')
+        if photo_file and photo_file.filename and allowed_file(photo_file.filename, ALLOWED_PHOTO_EXTENSIONS):
+            ext = photo_file.filename.rsplit('.', 1)[1].lower()
+            photo_filename = f"photo_child_{uuid.uuid4().hex[:10]}.{ext}"
+            photo_file.save(os.path.join(PHOTOS_FOLDER, photo_filename))
+
+        # Generate child pass app_no
+        child_count = db.execute("SELECT COUNT(*) AS c FROM users WHERE parent_id = ?", (parent['id'],)).fetchone()['c']
+        child_app_no = f"TRIC-{date.today().year}-CH{child_count + 1:02d}"
+
+        cursor = db.cursor()
+        cursor.execute(
+            """
+            INSERT INTO users (
+                app_no, role, status, name, email, phone, password_hash,
+                dob, age, address, pincode, guardian_name, guardian_occupation,
+                experience, pass_type_requested, photo_filename, health_declared,
+                rules_agreed, rules_confirmed_at, signature_name, place,
+                application_date, email_verified, phone_verified, parent_id
+            ) VALUES (?, 'member', 'approved', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, CURRENT_TIMESTAMP, ?, ?, ?, 1, 1, ?)
+            """,
+            (
+                child_app_no, name.upper(), parent['email'], parent['phone'], parent['password_hash'],
+                dob, age, parent['address'], parent['pincode'], parent['name'], 'Parent',
+                experience, pass_type, photo_filename,
+                parent['name'], parent['place'] or 'Tirupur', date.today(), parent['id']
+            )
+        )
+        new_child_id = cursor.lastrowid
+
+        # Create office_use record
+        id_card_no = f"TRIC-ID-{date.today().year}-{new_child_id:04d}"
+        rec_notes = f"Linked child pass under parent {parent['name']}."
+        if medical_notes:
+            rec_notes += f" Notes: {medical_notes}"
+
+        cursor.execute(
+            """
+            INSERT INTO office_use (
+                user_id, coach_recommendation, pass_type_issued, validity_start, validity_end,
+                id_card_number, id_card_fee_paid, documents_verified, approved_by, approved_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 'Parent Portal', CURRENT_TIMESTAMP)
+            """,
+            (
+                new_child_id,
+                rec_notes,
+                'Learn to Swim' if pass_type == 'learn_to_swim' else 'Competition',
+                str(date.today()),
+                str(date.today() + timedelta(days=30)),
+                id_card_no
+            )
+        )
+
+        # Create initial user_memberships
+        cursor.execute(
+            """
+            INSERT INTO user_memberships (
+                user_id, plan_id, batch_id, start_date, end_date, is_active
+            ) VALUES (?, ?, ?, ?, ?, 1)
+            """,
+            (
+                new_child_id,
+                plan_id,
+                batch_id,
+                str(date.today()),
+                str(date.today() + timedelta(days=30))
+            )
+        )
+        db.commit()
+        flash(f"Child pass for {name} ({child_app_no}) successfully added and linked to your family account!", "success")
+        return redirect(url_for('member_dashboard', view_id=new_child_id))
+
+    return render_template(
+        'member_add_child.html',
+        parent=parent,
+        batches=batches,
+        plans=plans
+    )
+
 @app.route('/renew', methods=['GET'])
 @login_required
 def renew_membership():
-    user = get_current_user()
+    curr = get_current_user()
     db = get_db()
+    view_id = request.args.get('view_id') or request.args.get('child_id') or request.args.get('uid')
+    target_user = curr
+    if view_id and str(view_id) != str(curr['id']):
+        child = db.execute("SELECT * FROM users WHERE id = ? AND parent_id = ?", (view_id, curr['id'])).fetchone()
+        if child:
+            target_user = db.execute("""
+                SELECT u.*, 
+                       m.id AS membership_id, m.plan_id, m.batch_id, m.start_date, m.end_date, m.is_active AS membership_active,
+                       b.name AS batch_name,
+                       p.name AS plan_name, p.fee_amount
+                FROM users u
+                LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+                LEFT JOIN batches b ON m.batch_id = b.id
+                LEFT JOIN plans p ON m.plan_id = p.id
+                WHERE u.id = ?
+            """, (view_id,)).fetchone() or curr
+
     plans = db.execute("SELECT * FROM plans ORDER BY fee_amount ASC").fetchall()
     
     # Calculate days left
     days_left = None
-    if user['end_date']:
-        end_d = datetime.strptime(str(user['end_date']), '%Y-%m-%d').date()
+    if target_user['end_date']:
+        end_d = datetime.strptime(str(target_user['end_date']), '%Y-%m-%d').date()
         days_left = (end_d - date.today()).days
 
     return render_template(
         'renew.html',
-        user=user,
+        user=target_user,
+        parent=curr if target_user['id'] != curr['id'] else None,
         plans=plans,
         upi_vpa=ACADEMY_UPI_VPA,
         payee_name=ACADEMY_PAYEE_NAME,
@@ -1093,6 +1325,14 @@ def api_upi_create_order():
     data = request.get_json(silent=True) or request.form
     raw_plan_id = data.get('plan_id')
     raw_amount = data.get('amount')
+    target_uid = data.get('user_id') or data.get('child_id') or request.args.get('view_id')
+    
+    renew_user_id = user['id']
+    if target_uid and str(target_uid) != str(user['id']):
+        db = get_db()
+        child = db.execute("SELECT id FROM users WHERE id = ? AND parent_id = ?", (target_uid, user['id'])).fetchone()
+        if child:
+            renew_user_id = child['id']
     try:
         plan_id = int(raw_plan_id) if raw_plan_id is not None else None
     except (ValueError, TypeError):
@@ -1107,7 +1347,7 @@ def api_upi_create_order():
         return jsonify({'error': 'Please select a valid plan.'}), 400
 
     try:
-        order = upi_service.create_upi_order(user['id'], plan_id, custom_amount=custom_amount)
+        order = upi_service.create_upi_order(renew_user_id, plan_id, custom_amount=custom_amount)
         return jsonify({
             'success': True,
             'order_id': order['order_id'],
@@ -1347,15 +1587,21 @@ def admin_send_member_reminder(user_id):
 @app.route('/my-pass')
 @login_required
 def my_pass():
-    """Printable official Entry Pass of the member."""
+    """Printable official Entry Pass of the member or linked child."""
     user = get_current_user()
     db = get_db()
-    office = db.execute("SELECT * FROM office_use WHERE user_id = ?", (user['id'],)).fetchone()
+    view_id = request.args.get('view_id') or request.args.get('child_id')
+    target_user = user
+    if view_id and str(view_id) != str(user['id']):
+        child = db.execute("SELECT * FROM users WHERE id = ? AND (parent_id = ? OR id = ?)", (view_id, user['id'], user['id'])).fetchone()
+        if child:
+            target_user = child
+    office = db.execute("SELECT * FROM office_use WHERE user_id = ?", (target_user['id'],)).fetchone()
     return render_template(
         'application_form.html',
-        app_no=user['app_no'],
-        today_date=user['application_date'],
-        applicant=user,
+        app_no=target_user['app_no'],
+        today_date=target_user['application_date'],
+        applicant=target_user,
         office=office,
         is_admin_mode=False,
         is_view_mode=True
