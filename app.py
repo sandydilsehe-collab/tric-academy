@@ -576,7 +576,7 @@ class CostEffectiveAlertService:
             f"To retain your assigned swimming slot and avoid entry pass lockout, please renew online via UPI (Google Pay, PhonePe, Paytm, CRED):\n\n"
             f"⚡ *Instant UPI Renewal Link:*\n"
             f"{renew_url}\n\n"
-            f"📍 *Academy Location:* 85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur (GPS: 11.1417° N, 77.3059° E)\n"
+            f"📍 *Academy Location:* 85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur (GPS: 11°08'30.0\"N 77°18'21.2\"E)\n"
             f"📞 *Helpdesk:* +91 98947 77333 / +91 98947 30333"
         )
 
