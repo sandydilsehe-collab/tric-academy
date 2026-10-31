@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initMockOtpModal();
   initCompetitionCharts();
   initPhotoLightbox();
+  initAdminQuickApprove();
 });
 
 // 1. Date of Birth, Age Calculation & Single Digit Boxes
@@ -735,4 +736,117 @@ function initPhotoLightbox() {
       document.body.style.overflow = 'hidden';
     });
   });
+}
+
+
+// ==========================================================================
+// Super Admin 1-Click Pass Approval & Live Counters Update
+// ==========================================================================
+function initAdminQuickApprove() {
+  // Quick approve from tables (Recent Pending Applications / Pending Applicants)
+  document.querySelectorAll('.quick-approve-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = form.querySelector('.approve-pass-btn');
+      const userId = form.getAttribute('data-user-id');
+      if (!btn || btn.disabled) return;
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ Approving...';
+      btn.style.opacity = '0.7';
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Permanently disable the button for this user
+          btn.innerHTML = '✓ Pass Approved &amp; Issued';
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-success');
+          btn.style.backgroundColor = '#10B981';
+          btn.style.borderColor = '#059669';
+          btn.style.color = '#FFFFFF';
+          btn.style.opacity = '0.85';
+          btn.style.cursor = 'not-allowed';
+          btn.disabled = true;
+
+          // Update row status badge if present
+          const badge = document.getElementById(`status-badge-${userId}`);
+          if (badge) {
+            badge.className = 'status-badge status-active';
+            badge.textContent = '✓ Approved';
+          }
+
+          // Update pending stat counter on dashboard
+          const pendingStat = document.getElementById('pendingApprovalStat');
+          if (pendingStat && typeof data.pending_users !== 'undefined') {
+            pendingStat.textContent = data.pending_users;
+          }
+
+          // Update header counters
+          const heroCount = document.getElementById('heroPendingCount');
+          if (heroCount && typeof data.pending_users !== 'undefined') {
+            heroCount.textContent = data.pending_users;
+          }
+
+          const headerCount = document.getElementById('pendingCountHeader');
+          if (headerCount && typeof data.pending_users !== 'undefined') {
+            headerCount.textContent = data.pending_users;
+          }
+
+          // Show confirmation toast
+          showApprovalToast(data.message || `Pass approved & issued for ${data.name}! (ID: ${data.id_card_number})`);
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          btn.style.opacity = '1';
+          alert(data.message || 'Error processing approval');
+        }
+      })
+      .catch(err => {
+        console.error('Quick approve error:', err);
+        form.submit(); // fallback to normal submit
+      });
+    });
+  });
+
+  // Application form Super Admin approve button
+  const formApproveBtn = document.getElementById('approveIssuePassBtn');
+  if (formApproveBtn) {
+    const parentForm = formApproveBtn.closest('form');
+    if (parentForm) {
+      parentForm.addEventListener('submit', function(e) {
+        if (e.submitter && e.submitter.value === 'approve') {
+          setTimeout(() => {
+            formApproveBtn.disabled = true;
+            formApproveBtn.innerHTML = '⏳ Approving &amp; Issuing Pass...';
+            formApproveBtn.style.opacity = '0.7';
+            formApproveBtn.style.cursor = 'not-allowed';
+          }, 10);
+        }
+      });
+    }
+  }
+}
+
+function showApprovalToast(msg) {
+  let toast = document.getElementById('adminApprovalToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'adminApprovalToast';
+    toast.style.cssText = 'position: fixed; bottom: 24px; right: 24px; background: #065F46; color: #FFFFFF; padding: 12px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); font-weight: 600; font-size: 0.9rem; z-index: 99999; display: flex; align-items: center; gap: 8px; border: 1.5px solid #10B981; animation: fadeIn 0.3s ease;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<span>✓</span> <span>${msg}</span>`;
+  toast.style.display = 'flex';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 4500);
 }

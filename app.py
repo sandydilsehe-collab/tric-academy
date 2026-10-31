@@ -2212,6 +2212,82 @@ def admin_applicants():
     ).fetchall()
     return render_template('admin_applicants.html', applicants=applicants)
 
+
+@app.route('/admin/approve-applicant/<int:user_id>', methods=['POST'])
+@role_required(['admin'])
+def admin_quick_approve(user_id):
+    db = get_db()
+    applicant = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not applicant:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({'success': False, 'message': 'Applicant not found'}), 404
+        flash('Applicant not found.', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+    today = date.today()
+    end_date = today + timedelta(days=90)
+    id_card_no = f"TRIC-ID-{today.year}-{user_id:04d}"
+
+    # Approve user
+    db.execute("UPDATE users SET status = 'approved', email_verified = 1, phone_verified = 1 WHERE id = ?", (user_id,))
+
+    # Update office_use
+    db.execute(
+        """
+        UPDATE office_use SET
+            documents_verified = 1,
+            id_card_fee_paid = 1,
+            id_card_number = ?,
+            validity_start = ?,
+            validity_end = ?,
+            pass_type_issued = COALESCE(pass_type_issued, ?),
+            section_ic_signature = COALESCE(section_ic_signature, 'Head Coach Shiva'),
+            section_ic_date = ?,
+            approved_by = ?,
+            approved_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+        """,
+        (
+            id_card_no,
+            str(today),
+            str(end_date),
+            applicant['pass_type_requested'] or 'Standard Pass',
+            str(today),
+            session.get('user_name', 'Super Admin'),
+            user_id
+        )
+    )
+
+    # Ensure active membership
+    existing_mem = db.execute("SELECT id FROM user_memberships WHERE user_id = ? AND is_active = 1", (user_id,)).fetchone()
+    if not existing_mem:
+        db.execute(
+            """
+            INSERT INTO user_memberships (user_id, plan_id, batch_id, start_date, end_date, is_active)
+            VALUES (?, 2, 1, ?, ?, 1)
+            """,
+            (user_id, str(today), str(end_date))
+        )
+
+    db.commit()
+
+    # Recalculate pending count
+    pending_count = db.execute("SELECT COUNT(*) AS c FROM users WHERE status = 'pending'").fetchone()['c']
+
+    flash(f"Application approved and pass issued for {applicant['name']}! Pass ID: {id_card_no}", 'success')
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'name': applicant['name'],
+            'id_card_number': id_card_no,
+            'pending_users': pending_count,
+            'message': f"Pass successfully approved & issued for {applicant['name']} (Pass ID: {id_card_no})"
+        })
+
+    return redirect(request.referrer or url_for('admin_dashboard'))
+
 @app.route('/admin/application/<int:user_id>', methods=['GET', 'POST'])
 @role_required(['admin'])
 def admin_application_review(user_id):
@@ -2270,26 +2346,49 @@ def admin_application_review(user_id):
         )
 
         if action == 'approve':
-            if not docs_verified:
-                flash('Please check "Documents verified at office" before approving.', 'warning')
-                return redirect(url_for('admin_application_review', user_id=user_id))
-            
+            # Auto-verify documents and card fee on Super Admin approval
+            docs_verified = 1
+            fee_paid = 1
+            if not id_card_no:
+                id_card_no = f"TRIC-ID-{date.today().year}-{user_id:04d}"
+            if not validity_start_str:
+                validity_start_str = str(date.today())
+            if not validity_end_str:
+                start_obj = datetime.strptime(validity_start_str, '%Y-%m-%d').date()
+                validity_end_str = (start_obj + timedelta(days=90)).strftime('%Y-%m-%d')
+
             db.execute("UPDATE users SET status = 'approved', email_verified = 1, phone_verified = 1 WHERE id = ?", (user_id,))
 
+            db.execute(
+                """
+                UPDATE office_use SET
+                    documents_verified = 1,
+                    id_card_fee_paid = 1,
+                    id_card_number = ?,
+                    validity_start = ?,
+                    validity_end = ?,
+                    approved_by = ?,
+                    approved_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+                """,
+                (id_card_no, validity_start_str, validity_end_str, session.get('user_name', 'Super Admin'), user_id)
+            )
+
             # Create or update active membership
-            if plan_id and batch_id and validity_start_str and validity_end_str:
-                db.execute("UPDATE user_memberships SET is_active = 0 WHERE user_id = ?", (user_id,))
-                db.execute(
-                    """
-                    INSERT INTO user_memberships (user_id, plan_id, batch_id, start_date, end_date, is_active)
-                    VALUES (?, ?, ?, ?, ?, 1)
-                    """,
-                    (user_id, plan_id, batch_id, validity_start_str, validity_end_str)
-                )
+            p_id = plan_id or 2
+            b_id = batch_id or 1
+            db.execute("UPDATE user_memberships SET is_active = 0 WHERE user_id = ?", (user_id,))
+            db.execute(
+                """
+                INSERT INTO user_memberships (user_id, plan_id, batch_id, start_date, end_date, is_active)
+                VALUES (?, ?, ?, ?, ?, 1)
+                """,
+                (user_id, p_id, b_id, validity_start_str, validity_end_str)
+            )
 
             db.commit()
             flash(f"Application approved for {applicant['name']}! Pass ID: {id_card_no}", 'success')
-            return redirect(url_for('admin_applicants'))
+            return redirect(url_for('admin_application_review', user_id=user_id))
 
         db.commit()
         flash('Office records updated successfully.', 'success')

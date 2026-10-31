@@ -94,6 +94,21 @@
       </div>
     </div>
 
+    {% if is_admin_mode and applicant and applicant.status == 'approved' %}
+      <div style="margin: 0.5rem 1.5rem 1.5rem; padding: 0.85rem 1.25rem; background: #ECFDF5; border: 1.5px solid #10B981; border-radius: var(--radius-sm); color: #065F46; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;" class="no-print">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.4rem; line-height: 1;">✓</span>
+          <div>
+            <strong style="font-size: 0.95rem;">Pass Approved &amp; Officially Issued</strong>
+            <div style="font-size: 0.8rem; color: #047857;">Pass ID: <strong class="font-mono">{{ office.id_card_number if office else 'Issued' }}</strong> &bull; Approved by {{ office.approved_by if office else 'Super Admin' }} &bull; Active in Member Directory</div>
+          </div>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: #FFFFFF; font-weight: 700; border-color: #10B981; color: #047857;">
+          ← Back to Admin Dashboard
+        </a>
+      </div>
+    {% endif %}
+
     <!-- Centered Form Title & Meta -->
     <div class="paper-subheader">
       <div style="width: 140px;"></div> <!-- Spacer to center title -->
@@ -535,13 +550,19 @@
         </a>
 
         {% if is_admin_mode %}
-          <div style="display: flex; gap: 0.75rem;">
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
             <button type="submit" name="action" value="save" class="btn btn-secondary">
               Save Office Record
             </button>
-            <button type="submit" name="action" value="approve" class="btn btn-primary" style="background-color: var(--success);">
-              ✓ Approve &amp; Issue Pass
-            </button>
+            {% if applicant and applicant.status == 'approved' %}
+              <button type="button" class="btn btn-success" disabled style="opacity: 0.85; cursor: not-allowed; background-color: #10B981; border-color: #059669; color: #FFFFFF; font-weight: 700;" title="This pass has already been approved and issued for this user">
+                ✓ Pass Already Approved &amp; Issued
+              </button>
+            {% else %}
+              <button type="submit" name="action" value="approve" id="approveIssuePassBtn" class="btn btn-primary" style="background-color: var(--success); font-weight: 700;">
+                ✓ Approve &amp; Issue Pass
+              </button>
+            {% endif %}
           </div>
         {% elif not is_view_mode %}
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">

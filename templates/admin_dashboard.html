@@ -18,7 +18,7 @@
           + Create User (Entry Pass)
         </a>
         <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
-          Pending Passes ({{ pending_users }})
+          Pending Passes (<span id="heroPendingCount">{{ pending_users }}</span>)
         </a>
         <form action="{{ url_for('admin_run_reminders_now') }}" method="POST" style="display: inline;">
           <button type="submit" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;" title="Trigger expiry reminder job immediately">
@@ -47,7 +47,7 @@
     </div>
     <div class="stat-box" style="border-left: 3px solid var(--warning);">
       <div class="stat-label">Pending Approval</div>
-      <div class="stat-value font-mono" style="color: var(--warning);">{{ pending_users }}</div>
+      <div class="stat-value font-mono" id="pendingApprovalStat" style="color: var(--warning);">{{ pending_users }}</div>
     </div>
     <div class="stat-box" style="border-left: 3px solid #D97706;">
       <div class="stat-label">Expiring in 7 Days</div>
@@ -78,7 +78,7 @@
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Recent Pending Applications</h3>
-        <a href="{{ url_for('admin_applicants') }}" style="font-size: 0.825rem; color: var(--brand-primary);">View All ({{ pending_users }}) →</a>
+        <a href="{{ url_for('admin_applicants') }}" style="font-size: 0.825rem; color: var(--brand-primary);">View All (<span id="pendingCountHeader">{{ pending_users }}</span>) →</a>
       </div>
 
       {% if recent_applicants %}
@@ -105,10 +105,17 @@
                 </span>
               </td>
               <td class="font-mono" style="font-size: 0.8rem;">{{ a.application_date }}</td>
-              <td style="text-align: right;">
-                <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-primary btn-sm">
-                  Review &amp; Endorse
-                </a>
+              <td style="text-align: right; white-space: nowrap;">
+                <div style="display: inline-flex; gap: 0.45rem; align-items: center; justify-content: flex-end;">
+                  <form action="{{ url_for('admin_quick_approve', user_id=a.id) }}" method="POST" class="quick-approve-form" data-user-id="{{ a.id }}" style="display: inline; margin: 0;">
+                    <button type="submit" class="btn btn-primary btn-sm approve-pass-btn" id="approve-btn-{{ a.id }}" style="background-color: var(--success); font-weight: 700;">
+                      ✓ Approve &amp; Issue Pass
+                    </button>
+                  </form>
+                  <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-secondary btn-sm" title="View and edit official form">
+                    Review 📄
+                  </a>
+                </div>
               </td>
             </tr>
             {% endfor %}

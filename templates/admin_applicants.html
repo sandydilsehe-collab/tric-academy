@@ -80,10 +80,17 @@
               {% endif %}
             </td>
             <td class="font-mono" style="font-size: 0.8rem;">{{ a.application_date }}</td>
-            <td style="text-align: right;">
-              <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-primary btn-sm">
-                Review &amp; Endorse →
-              </a>
+            <td style="text-align: right; white-space: nowrap;">
+              <div style="display: inline-flex; gap: 0.45rem; align-items: center; justify-content: flex-end;">
+                <form action="{{ url_for('admin_quick_approve', user_id=a.id) }}" method="POST" class="quick-approve-form" data-user-id="{{ a.id }}" style="display: inline; margin: 0;">
+                  <button type="submit" class="btn btn-primary btn-sm approve-pass-btn" id="approve-btn-{{ a.id }}" style="background-color: var(--success); font-weight: 700;">
+                    ✓ Approve &amp; Issue Pass
+                  </button>
+                </form>
+                <a href="{{ url_for('admin_application_review', user_id=a.id) }}" class="btn btn-secondary btn-sm" title="View paperwork">
+                  Review 📄
+                </a>
+              </div>
             </td>
           </tr>
           {% endfor %}
