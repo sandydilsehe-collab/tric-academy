@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initDeclarationAutoFill();
   initMockOtpModal();
   initCompetitionCharts();
+  initPhotoLightbox();
 });
 
 // 1. Date of Birth, Age Calculation & Single Digit Boxes
@@ -544,5 +545,194 @@ function initMobileNav() {
     if (window.innerWidth >= 992 && mobileNavMenu.classList.contains('is-open')) {
       closeMenu();
     }
+  });
+}
+
+
+// ==========================================================================
+// Interactive Photo Lightbox (Expand on Click or Touch)
+// ==========================================================================
+function initPhotoLightbox() {
+  const modal = document.getElementById('photoLightboxModal');
+  if (!modal) return;
+
+  const backdrop = document.getElementById('photoLightboxBackdrop');
+  const closeBtn = document.getElementById('photoLightboxCloseBtn');
+  const prevBtn = document.getElementById('photoLightboxPrevBtn');
+  const nextBtn = document.getElementById('photoLightboxNextBtn');
+  const imgElement = document.getElementById('photoLightboxImg');
+  const titleElement = document.getElementById('photoLightboxTitle');
+  const tagElement = document.getElementById('photoLightboxTag');
+  const captionElement = document.getElementById('photoLightboxCaption');
+  const counterElement = document.getElementById('photoLightboxCounter');
+  const fullscreenBtn = document.getElementById('photoLightboxFullscreenBtn');
+
+  // Collect all gallery items
+  const items = Array.from(document.querySelectorAll('[data-expandable="true"]'));
+  if (items.length === 0) return;
+
+  let currentIndex = 0;
+
+  function updateLightbox(index) {
+    if (index < 0) index = items.length - 1;
+    if (index >= items.length) index = 0;
+    currentIndex = index;
+
+    const item = items[currentIndex];
+    const src = item.getAttribute('data-img-src') || item.querySelector('img')?.src;
+    const title = item.getAttribute('data-title') || item.querySelector('h4')?.textContent || 'TRIC Academy Facility';
+    const tag = item.getAttribute('data-category') || 'Academy Photo';
+    const caption = item.getAttribute('data-caption') || item.querySelector('p')?.textContent || '';
+
+    if (imgElement) {
+      imgElement.style.opacity = '0.3';
+      imgElement.src = src;
+      imgElement.alt = title;
+      imgElement.onload = function() {
+        imgElement.style.opacity = '1';
+      };
+    }
+
+    if (titleElement) titleElement.textContent = title;
+    if (tagElement) tagElement.textContent = tag;
+    if (captionElement) captionElement.textContent = caption;
+    if (counterElement) counterElement.textContent = `Photo ${currentIndex + 1} of ${items.length}`;
+  }
+
+  function openLightbox(index) {
+    updateLightbox(index);
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function showNext() {
+    updateLightbox(currentIndex + 1);
+  }
+
+  function showPrev() {
+    updateLightbox(currentIndex - 1);
+  }
+
+  // Bind click & touch listeners to gallery items
+  items.forEach(function(item, idx) {
+    // Click or touch anywhere on the photo preview
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      openLightbox(idx);
+    });
+
+    // Keyboard support: Enter / Space to open
+    item.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLightbox(idx);
+      }
+    });
+  });
+
+  // Also bind to explicit card expand buttons
+  document.querySelectorAll('.photo-expand-trigger-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = parseInt(btn.getAttribute('data-index') || '0', 10);
+      openLightbox(idx);
+    });
+  });
+
+  // Modal control buttons
+  if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  if (backdrop) backdrop.addEventListener('click', closeLightbox);
+  if (prevBtn) prevBtn.addEventListener('click', function(e) { e.stopPropagation(); showPrev(); });
+  if (nextBtn) nextBtn.addEventListener('click', function(e) { e.stopPropagation(); showNext(); });
+
+  // Fullscreen button
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!document.fullscreenElement) {
+        modal.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+  }
+
+  // Keyboard navigation: Escape to close, Left/Right arrows to navigate
+  document.addEventListener('keydown', function(e) {
+    if (!modal.classList.contains('is-open')) return;
+    if (e.key === 'Escape') {
+      closeLightbox();
+    } else if (e.key === 'ArrowRight') {
+      showNext();
+    } else if (e.key === 'ArrowLeft') {
+      showPrev();
+    }
+  });
+
+  // Mobile Touch Gestures: Swipe left (next), Swipe right (prev), Swipe down (close)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  modal.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  modal.addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleTouchGesture();
+  }, { passive: true });
+
+  function handleTouchGesture() {
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    // Horizontal swipe threshold: 45px
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
+      if (diffX < 0) {
+        showNext(); // Swipe left
+      } else {
+        showPrev(); // Swipe right
+      }
+    } else if (diffY > 90) {
+      // Swiping downwards closes modal
+      closeLightbox();
+    }
+  }
+
+  // Support standalone expandable photos across any page (e.g. member ID or pass)
+  document.querySelectorAll('.expandable-photo').forEach(function(photo) {
+    photo.style.cursor = 'zoom-in';
+    photo.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (imgElement) {
+        imgElement.src = photo.src;
+        imgElement.alt = photo.alt || 'Expanded Photo';
+      }
+      if (titleElement) titleElement.textContent = photo.alt || 'Photo View';
+      if (tagElement) tagElement.textContent = 'TRIC Academy';
+      if (captionElement) captionElement.textContent = '';
+      if (counterElement) counterElement.textContent = 'Photo View';
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    });
   });
 }

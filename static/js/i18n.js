@@ -101,6 +101,15 @@
       nav_competition: "Competition Hub",
       lang_btn_text: "தமிழ்",
 
+      // Testimonials & Gallery Lightbox
+      heading_testimonials: "Testimonials",
+      subheading_testimonials: "Trusted by Hundreds of Swimmers in Tirupur",
+      badge_testimonials: "Swimmer & Parent Stories",
+      tap_to_expand: "Expand Photo",
+      lightbox_close: "Close (Esc)",
+      lightbox_prev: "Previous",
+      lightbox_next: "Next",
+
       // Rules Page
       rules_page_title: "Pool Rules & Regulations",
       rules_page_subtitle: "Official Academy Guidelines",
@@ -194,6 +203,15 @@
       nav_attendance: "வருகைப் பதிவு",
       nav_competition: "போட்டி நீச்சல்",
       lang_btn_text: "English",
+
+      // Testimonials & Gallery Lightbox
+      heading_testimonials: "சான்றுகள் & கருத்துக்கள்",
+      subheading_testimonials: "திருப்பூரில் நூற்றுக்கணக்கான நீச்சல் வீரர்களால் நம்பப்படுகிறது",
+      badge_testimonials: "நீச்சல் வீரர்கள் & பெற்றோர் கருத்துக்கள்",
+      tap_to_expand: "புகைப்படத்தை பெரிதாக்கு",
+      lightbox_close: "மூடு (Esc)",
+      lightbox_prev: "முந்தையது",
+      lightbox_next: "அடுத்தது",
 
       // Rules Page
       rules_page_title: "நீச்சல் குளம் பொது விதிகள் & ஒழுங்குமுறைகள்",
