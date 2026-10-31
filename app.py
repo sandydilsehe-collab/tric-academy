@@ -966,7 +966,6 @@ def confirm_rules():
 def logout():
     session.clear()
     session['logged_out'] = True
-    flash('You have been successfully logged out.', 'info')
     resp = redirect(url_for('login'))
     resp.set_cookie(app.config.get('SESSION_COOKIE_NAME', 'tric_session'), '', expires=0, path='/')
     return resp
