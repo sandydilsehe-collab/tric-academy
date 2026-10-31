@@ -785,7 +785,6 @@ def direct_login(identifier):
     session['user_role'] = user['role']
     session['user_name'] = user['name']
 
-    flash(f"Signed in as {user['name']}!", 'success')
     next_url = request.args.get('next')
     if next_url and next_url.startswith('/'):
         target = next_url + ('&' if '?' in next_url else '?') + f"uid={user['id']}"
@@ -864,7 +863,6 @@ def login():
             flash(f"Welcome, {user['name']}! Your entry pass registration is in Pending Office Verification mode.", 'info')
             return redirect(url_for('member_dashboard', uid=user['id']), code=303)
 
-        flash(f"Welcome back, {user['name']}!", 'success')
         if user['role'] == 'admin':
             return redirect(url_for('admin_dashboard', uid=user['id']), code=303)
         elif user['role'] == 'coach':

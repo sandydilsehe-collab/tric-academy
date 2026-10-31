@@ -1,6 +1,7 @@
 // TRIC Academy - Client Interactions & Form Logic
 
 document.addEventListener('DOMContentLoaded', function() {
+  initMobileNav();
   initDateOfBirthAndAge();
   initPhotoUploadPreview();
   initSponsorshipToggle();
@@ -469,4 +470,79 @@ function initCompetitionCharts() {
   } catch (err) {
     console.error('Failed to parse competition chart data', err);
   }
+}
+
+
+// 7. Responsive Mobile Navigation Drawer & Hamburger Toggle
+function initMobileNav() {
+  const hamburgerBtn = document.getElementById('navHamburgerBtn');
+  const closeBtn = document.getElementById('mobileNavCloseBtn');
+  const mobileNavMenu = document.getElementById('mobileNavMenu');
+  const backdrop = document.getElementById('mobileNavBackdrop');
+
+  if (!hamburgerBtn || !mobileNavMenu) return;
+
+  function openMenu() {
+    hamburgerBtn.classList.add('is-active');
+    hamburgerBtn.setAttribute('aria-expanded', 'true');
+    mobileNavMenu.classList.add('is-open');
+    mobileNavMenu.setAttribute('aria-hidden', 'false');
+    if (backdrop) backdrop.classList.add('is-open');
+    document.body.classList.add('nav-open');
+  }
+
+  function closeMenu() {
+    hamburgerBtn.classList.remove('is-active');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+    mobileNavMenu.classList.remove('is-open');
+    mobileNavMenu.setAttribute('aria-hidden', 'true');
+    if (backdrop) backdrop.classList.remove('is-open');
+    document.body.classList.remove('nav-open');
+  }
+
+  function toggleMenu() {
+    if (mobileNavMenu.classList.contains('is-open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  }
+
+  hamburgerBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeMenu();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closeMenu);
+  }
+
+  // Close when tapping any link inside mobile menu
+  const links = mobileNavMenu.querySelectorAll('a');
+  links.forEach(function(link) {
+    link.addEventListener('click', function() {
+      closeMenu();
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && mobileNavMenu.classList.contains('is-open')) {
+      closeMenu();
+    }
+  });
+
+  // Close on desktop resize
+  window.addEventListener('resize', function() {
+    if (window.innerWidth >= 992 && mobileNavMenu.classList.contains('is-open')) {
+      closeMenu();
+    }
+  });
 }

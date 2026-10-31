@@ -1,0 +1,6 @@
+{
+  "name": "TRIC Academy – School of Swimming",
+  "description": "Official web application for TRIC Academy School of Swimming featuring entry pass applications, membership plans, batch attendance, competition performance tracking, and automated renewal reminders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -49,8 +49,8 @@
         {% endif %}
       </nav>
 
-      <!-- Zone 3: Primary Action / User Profile -->
-      <div class="nav-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+      <!-- Zone 3: Primary Action / User Profile (Desktop & Mobile) -->
+      <div class="nav-actions">
         {% if current_user %}
           <!-- Notification Bell Dropdown -->
           <div class="notif-dropdown-wrapper">
@@ -95,19 +95,108 @@
             </div>
           </div>
 
-          <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">
+          <a href="{{ url_for('member_dashboard') if current_user.role == 'member' else url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm nav-desktop-user">
             <span>{{ current_user.name.split()[0] }}</span>
             <span class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">({{ current_user.role|capitalize }})</span>
           </a>
-          <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
+          <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm nav-desktop-logout" style="font-weight: 700; background-color: #EF4444; border-color: #DC2626; color: #FFFFFF;" title="Log Out">
             🚪 Log Out
           </a>
         {% else %}
-          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm">Login</a>
-          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm">Apply for Pass</a>
+          <a href="{{ url_for('login') }}" class="btn btn-secondary btn-sm nav-desktop-login">Login</a>
+          <a href="{{ url_for('apply_pass') }}" class="btn btn-primary btn-sm nav-desktop-apply">Apply for Pass</a>
         {% endif %}
+
+        <!-- Mobile Hamburger Menu Button -->
+        <button type="button" class="nav-hamburger" id="navHamburgerBtn" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
       </div>
     </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-nav-menu" id="mobileNavMenu" aria-hidden="true">
+      <div class="mobile-nav-inner">
+        <div class="mobile-nav-header">
+          <span class="mobile-nav-title">Menu Navigation</span>
+          <button type="button" class="mobile-nav-close" id="mobileNavCloseBtn" aria-label="Close menu">&times;</button>
+        </div>
+        <nav class="mobile-links-list">
+          <a href="{{ url_for('index') }}#about" class="mobile-nav-item">
+            <span class="mobile-nav-icon">🏊</span> About Academy
+          </a>
+          <a href="{{ url_for('index') }}#batches" class="mobile-nav-item">
+            <span class="mobile-nav-icon">⏱️</span> Batch Schedules
+          </a>
+          <a href="{{ url_for('index') }}#fees" class="mobile-nav-item">
+            <span class="mobile-nav-icon">💳</span> Membership Plans
+          </a>
+          <a href="{{ url_for('index') }}#testimonials" class="mobile-nav-item">
+            <span class="mobile-nav-icon">⭐</span> Testimonials
+          </a>
+          <a href="{{ url_for('rules') }}" class="mobile-nav-item {% if request.path == '/rules' %}active{% endif %}">
+            <span class="mobile-nav-icon">📋</span> Rules &amp; Regulations
+          </a>
+          <a href="{{ url_for('index') }}#contact" class="mobile-nav-item">
+            <span class="mobile-nav-icon">📍</span> Contact &amp; Location
+          </a>
+
+          {% if current_user %}
+            <div class="mobile-nav-divider"></div>
+            <div class="mobile-nav-section-label">Account &amp; Services</div>
+            {% if current_user.role == 'member' %}
+              <a href="{{ url_for('member_dashboard') }}" class="mobile-nav-item {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}">
+                <span class="mobile-nav-icon">🏊</span> My Dashboard
+              </a>
+              <a href="{{ url_for('renew_membership') }}" class="mobile-nav-item {% if request.path == '/renew' %}active{% endif %}">
+                <span class="mobile-nav-icon">⚡</span> Renew Pass
+              </a>
+            {% endif %}
+            {% if current_user.role == 'admin' %}
+              <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item {% if '/admin' in request.path %}active{% endif %}">
+                <span class="mobile-nav-icon">⚙️</span> Admin Hub
+              </a>
+            {% endif %}
+            {% if current_user.role in ('admin', 'coach') %}
+              <a href="{{ url_for('attendance_tool') }}" class="mobile-nav-item {% if request.path == '/attendance' %}active{% endif %}">
+                <span class="mobile-nav-icon">✅</span> Attendance Tool
+              </a>
+            {% endif %}
+            {% if current_user.role in ('admin', 'coach') or current_user.is_competition or current_user.pass_type_requested == 'competition' %}
+              <a href="{{ url_for('competition_hub') }}" class="mobile-nav-item {% if request.path == '/competition' %}active{% endif %}">
+                <span class="mobile-nav-icon">🏆</span> Competition Hub
+              </a>
+            {% endif %}
+          {% endif %}
+        </nav>
+
+        <div class="mobile-actions-wrapper">
+          {% if current_user %}
+            <div class="mobile-user-status">
+              <div>
+                <strong style="display:block; color: var(--text-main); font-size: 0.9rem;">{{ current_user.name }}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: capitalize;">Role: {{ current_user.role }}</span>
+              </div>
+              <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm" style="font-weight: 700; background-color: #EF4444; color: #FFFFFF;">
+                🚪 Log Out
+              </a>
+            </div>
+          {% else %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <a href="{{ url_for('login') }}" class="btn btn-secondary" style="font-weight: 700; text-align: center; justify-content: center;">
+                🔑 Login
+              </a>
+              <a href="{{ url_for('apply_pass') }}" class="btn btn-primary" style="font-weight: 700; text-align: center; justify-content: center; box-shadow: 0 4px 12px rgba(31, 138, 138, 0.35);">
+                🏊 Apply Pass
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
   </header>
 
   <!-- Flash Notification Messages -->
@@ -159,9 +248,9 @@
         <h5>Contact Details</h5>
         <ul class="footer-links" style="font-size: 0.825rem;">
           <li>Email: <a href="mailto:goodwillshiva@gmail.com">goodwillshiva@gmail.com</a></li>
-          <li>Phone 1: <a href="tel:+919894777333">+91 98947 77333</a></li>
-          <li>Phone 2: <a href="tel:+919894730333">+91 98947 30333</a></li>
-          <li>Phone 3: <a href="tel:+919894757333">+91 98947 57333</a></li>
+          <li>Phone 1: <a href="tel:+919894777333" class="phone-link">📞 +91 98947 77333</a></li>
+          <li>Phone 2: <a href="tel:+919894730333" class="phone-link">📞 +91 98947 30333</a></li>
+          <li>Phone 3: <a href="tel:+919894757333" class="phone-link">📞 +91 98947 57333</a></li>
           <li>Website: <a href="http://www.tricacademy.com" target="_blank">www.tricacademy.com</a></li>
         </ul>
       </div>
