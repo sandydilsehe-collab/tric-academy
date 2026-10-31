@@ -214,8 +214,10 @@ h1, h2, h3, h4, .font-heading {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 1.75rem;
+  gap: 1.15rem;
   list-style: none;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .nav-link {
@@ -967,7 +969,7 @@ body.nav-open {
 }
 
 /* Responsive Breakpoint for Mobile Hamburger Navigation */
-@media (max-width: 991px) {
+@media (max-width: 1040px) {
   .nav-links {
     display: none !important;
   }
@@ -1338,4 +1340,114 @@ body.nav-open {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+
+/* =========================================================================
+   Standard Navigation Dropdown Menu (Clustering & Single-Line Fit)
+   ========================================================================= */
+.nav-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.925rem;
+  font-weight: 500;
+  color: #CBD5E1;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown:hover .nav-dropdown-toggle,
+.nav-dropdown.open .nav-dropdown-toggle {
+  color: #38BDF8;
+}
+
+.nav-dropdown-chevron {
+  font-size: 0.65rem;
+  transition: transform 0.2s ease;
+  opacity: 0.75;
+}
+
+.nav-dropdown:hover .nav-dropdown-chevron,
+.nav-dropdown.open .nav-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 230px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  padding: 0.5rem 0;
+  z-index: 250;
+  list-style: none;
+}
+
+/* Invisible bridge so mouse hover doesn't break between button and menu */
+.nav-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu,
+.nav-dropdown.open .nav-dropdown-menu {
+  display: block;
+  animation: navDropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes navDropdownFadeIn {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1.15rem;
+  color: #E2E8F0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nav-dropdown-item:hover,
+.nav-dropdown-item.active {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38BDF8;
+  padding-left: 1.35rem;
+}
+
+.nav-dropdown-item .item-icon {
+  font-size: 1rem;
+  min-width: 20px;
+  display: inline-flex;
+  justify-content: center;
 }

@@ -24,30 +24,121 @@
         </div>
       </a>
 
-      <!-- Zone 2: Single-line Navigation Links -->
+      <!-- Zone 2: Single-line Navigation Links (Grouped for Perfect Single-Line Fit) -->
       <nav class="nav-links">
-        <a href="{{ url_for('index') }}#about" class="nav-link" data-i18n="nav_about">About</a>
-        <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
-        <a href="{{ url_for('index') }}#fees" class="nav-link" data-i18n="nav_fees">Fees</a>
-        <a href="{{ url_for('index') }}#testimonials" class="nav-link" data-i18n="nav_testimonials">Testimonials</a>
-        <a href="{{ url_for('index') }}#gallery" class="nav-link" data-i18n="nav_gallery">Gallery</a>
-        <a href="{{ url_for('rules') }}" class="nav-link {% if request.path == '/rules' %}active{% endif %}" data-i18n="nav_rules">Rules & Regulations</a>
-        <a href="{{ url_for('index') }}#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
-        {% if current_user %}
-          {% if current_user.role == 'member' %}
-            <a href="{{ url_for('member_dashboard') }}" class="nav-link {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}" data-i18n="nav_dashboard">🏊 My Dashboard</a>
-            <a href="{{ url_for('renew_membership') }}" class="nav-link {% if request.path == '/renew' %}active{% endif %}" data-i18n="nav_renew">⚡ Renew Pass</a>
-          {% endif %}
-          {% if current_user.role == 'admin' %}
-            <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if '/admin' in request.path %}active{% endif %}" data-i18n="nav_admin">Admin Hub</a>
-          {% endif %}
-          {% if current_user.role in ('admin', 'coach') %}
-            <a href="{{ url_for('attendance_tool') }}" class="nav-link {% if request.path == '/attendance' %}active{% endif %}" data-i18n="nav_attendance">Attendance</a>
-          {% endif %}
-          {% if current_user.role in ('admin', 'coach') or current_user.is_competition or current_user.pass_type_requested == 'competition' %}
-            <a href="{{ url_for('competition_hub') }}" class="nav-link {% if request.path == '/competition' %}active{% endif %}" data-i18n="nav_competition">Competition Hub</a>
-          {% endif %}
+        {% if current_user and current_user.role == 'member' %}
+          <a href="{{ url_for('member_dashboard') }}" class="nav-link {% if request.path in ('/dashboard', '/member/dashboard') %}active{% endif %}" data-i18n="nav_dashboard">🏊 My Dashboard</a>
+          <a href="{{ url_for('renew_membership') }}" class="nav-link {% if request.path == '/renew' %}active{% endif %}" data-i18n="nav_renew">⚡ Renew Pass</a>
+          <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
+        {% elif current_user and current_user.role == 'admin' %}
+          <!-- Admin Tools Dropdown -->
+          <div class="nav-dropdown" id="navAdminDropdown">
+            <button type="button" class="nav-dropdown-toggle {% if '/admin' in request.path %}active{% endif %}" style="color: #38BDF8; font-weight: 700;">
+              <span>⚙️ Admin Hub</span>
+              <span class="nav-dropdown-chevron">▼</span>
+            </button>
+            <ul class="nav-dropdown-menu">
+              <li>
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-dropdown-item">
+                  <span class="item-icon">📊</span>
+                  <span>Dashboard Overview</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('admin_applicants') }}" class="nav-dropdown-item">
+                  <span class="item-icon">📝</span>
+                  <span>Pending Applicants</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('admin_users') }}" class="nav-dropdown-item">
+                  <span class="item-icon">👥</span>
+                  <span>Member Directory</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('admin_reminders') }}" class="nav-dropdown-item">
+                  <span class="item-icon">🔔</span>
+                  <span>WhatsApp &amp; SMS Alerts</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('attendance_tool') }}" class="nav-dropdown-item">
+                  <span class="item-icon">⏱️</span>
+                  <span>Attendance Tool</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('admin_batches') }}" class="nav-dropdown-item">
+                  <span class="item-icon">🏊</span>
+                  <span>Batch Schedules</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('admin_backups') }}" class="nav-dropdown-item">
+                  <span class="item-icon">💾</span>
+                  <span>Database Backups</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+          <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
+        {% else %}
+          <!-- Public Core Links -->
+          <a href="{{ url_for('index') }}#about" class="nav-link" data-i18n="nav_about">About</a>
+          <a href="{{ url_for('index') }}#batches" class="nav-link" data-i18n="nav_batches">Batches</a>
+          <a href="{{ url_for('index') }}#fees" class="nav-link" data-i18n="nav_fees">Fees</a>
         {% endif %}
+
+        <!-- Grouped Academy / Explore Dropdown (Clubbed to fit on 1 line across all viewports) -->
+        <div class="nav-dropdown" id="navExploreDropdown">
+          <button type="button" class="nav-dropdown-toggle {% if request.path in ('/rules', '/competition') %}active{% endif %}" aria-expanded="false" aria-haspopup="true">
+            <span data-i18n="nav_explore">Explore</span>
+            <span class="nav-dropdown-chevron">▼</span>
+          </button>
+          <ul class="nav-dropdown-menu">
+            {% if current_user and current_user.role == 'member' %}
+              <li>
+                <a href="{{ url_for('index') }}#about" class="nav-dropdown-item">
+                  <span class="item-icon">🏊</span>
+                  <span data-i18n="nav_about">About Academy</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ url_for('index') }}#fees" class="nav-dropdown-item">
+                  <span class="item-icon">💳</span>
+                  <span data-i18n="nav_fees">Membership Fees</span>
+                </a>
+              </li>
+            {% endif %}
+            <li>
+              <a href="{{ url_for('index') }}#gallery" class="nav-dropdown-item">
+                <span class="item-icon">📸</span>
+                <span data-i18n="nav_gallery">Photo Gallery</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('rules') }}" class="nav-dropdown-item {% if request.path == '/rules' %}active{% endif %}">
+                <span class="item-icon">📋</span>
+                <span data-i18n="nav_rules">Rules &amp; Safety</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('index') }}#testimonials" class="nav-dropdown-item">
+                <span class="item-icon">⭐</span>
+                <span data-i18n="nav_testimonials">Member Reviews</span>
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('competition_hub') }}" class="nav-dropdown-item {% if request.path == '/competition' %}active{% endif %}">
+                <span class="item-icon">🏆</span>
+                <span data-i18n="nav_competition">Competition Squad</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <a href="{{ url_for('index') }}#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
       </nav>
 
       <!-- Zone 3: Primary Action / User Profile (Desktop & Mobile) -->
