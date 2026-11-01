@@ -58,6 +58,12 @@
                 </a>
               </li>
               <li>
+                <a href="{{ url_for('admin_finances') }}" class="nav-dropdown-item">
+                  <span class="item-icon">💰</span>
+                  <span>Financial Records &amp; Invoices</span>
+                </a>
+              </li>
+              <li>
                 <a href="{{ url_for('admin_reminders') }}" class="nav-dropdown-item">
                   <span class="item-icon">🔔</span>
                   <span>WhatsApp &amp; SMS Alerts</span>
@@ -253,8 +259,11 @@
               </a>
             {% endif %}
             {% if current_user.role == 'admin' %}
-              <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item {% if '/admin' in request.path %}active{% endif %}">
+              <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item {% if '/admin' in request.path and '/admin/finances' not in request.path %}active{% endif %}">
                 <span class="mobile-nav-icon">⚙️</span> <span data-i18n="nav_admin">Admin Hub</span>
+              </a>
+              <a href="{{ url_for('admin_finances') }}" class="mobile-nav-item {% if request.path == '/admin/finances' %}active{% endif %}">
+                <span class="mobile-nav-icon">💰</span> <span>Finances &amp; Invoices</span>
               </a>
             {% endif %}
             {% if current_user.role in ('admin', 'coach') %}

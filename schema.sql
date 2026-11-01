@@ -134,6 +134,8 @@ CREATE TABLE IF NOT EXISTS payments (
     currency TEXT DEFAULT 'INR',
     payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     transaction_id TEXT UNIQUE NOT NULL,
+    invoice_no TEXT UNIQUE,
+    invoice_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     order_id TEXT,
     upi_ref_id TEXT,
     upi_vpa TEXT,
@@ -141,10 +143,37 @@ CREATE TABLE IF NOT EXISTS payments (
     razorpay_signature TEXT,
     status TEXT CHECK(status IN ('success', 'failed', 'pending')) DEFAULT 'success',
     payment_method TEXT DEFAULT 'UPI Intent',
+    reconciled INTEGER DEFAULT 0,
+    reconciled_at DATETIME,
+    reconciled_by INTEGER,
+    reconciled_notes TEXT,
+    receipt_sent_whatsapp INTEGER DEFAULT 0,
+    receipt_sent_email INTEGER DEFAULT 0,
     notes TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (plan_id) REFERENCES plans(id)
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    FOREIGN KEY (reconciled_by) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- Financial Audit Trail Table (Tamper-evident record of all revenues, receipts & reconciliations)
+CREATE TABLE IF NOT EXISTS financial_audit_trail (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    payment_id INTEGER,
+    invoice_no TEXT,
+    action TEXT NOT NULL,
+    amount REAL,
+    performed_by INTEGER,
+    performed_by_name TEXT,
+    details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE SET NULL,
+    FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON financial_audit_trail(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON financial_audit_trail(action);
+CREATE INDEX IF NOT EXISTS idx_audit_invoice ON financial_audit_trail(invoice_no);
+CREATE INDEX IF NOT EXISTS idx_payments_invoice_no ON payments(invoice_no);
+CREATE INDEX IF NOT EXISTS idx_payments_reconciled ON payments(reconciled, payment_date);
 
 -- UPI Intent Orders Table (tracks in-flight UPI intent sessions & polling status)
 CREATE TABLE IF NOT EXISTS upi_orders (

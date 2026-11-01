@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Records &amp; Revenue Audit Trail – TRIC Academy{% endblock %}
+
+{% block content %}
+<!-- Page Hero Banner -->
+<div class="page-hero-banner" style="background: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-accent) 100%); color: #FFFFFF; padding: 2.25rem 0; margin-bottom: 2rem;">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; margin-bottom: 0.25rem;">
+          Financial Administration &amp; Accounting
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; line-height: 1.2;">
+          Revenue Records &amp; Audit Trail
+        </h1>
+        <p style="margin: 0.35rem 0 0; opacity: 0.9; font-size: 0.9rem;">
+          Structured ledger of all collected revenues, instant digital receipt dispatch, and account reconciliation.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openRecordModal()" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #FFFFFF; font-weight: 700;">
+          ➕ Record Counter Collection
+        </button>
+        <a href="{{ url_for('export_finances_csv') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #FFFFFF; font-weight: 700;">
+          📥 Export Ledger (CSV)
+        </a>
+        {% if unreconciled_txns > 0 %}
+          <form action="{{ url_for('admin_reconcile_all') }}" method="POST" style="margin:0;" onsubmit="return confirm('Reconcile all {{ unreconciled_txns }} pending transactions against bank settlements?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-sm" style="background: #10B981; border-color: #059669; font-weight: 700;">
+              ✓ Reconcile All ({{ unreconciled_txns }})
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom: 5rem;">
+
+  <!-- Admin Navigation Strip -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem; overflow-x: auto;">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">Overview</a>
+    <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
+    <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle); color: var(--brand-primary); font-weight: 700; border-color: var(--brand-primary);">💰 Financial Records</a>
+    <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
+    <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
+    <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>
+    <a href="{{ url_for('admin_backups') }}" class="btn btn-secondary btn-sm">Backups</a>
+    <a href="{{ url_for('export_finances_csv') }}" class="btn btn-secondary btn-sm" style="margin-left: auto;">Export Finances CSV</a>
+  </div>
+
+  <!-- Financial KPI Metrics (Daily, Weekly, Monthly, Cumulative, Reconciliation) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    
+    <!-- Today's Collections -->
+    <div class="card" style="padding: 1.25rem; border-left: 4px solid var(--brand-primary);">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
+        📅 Today's Collections
+      </div>
+      <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: var(--brand-primary);">
+        ₹{{ '{:,.2f}'.format(today_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Daily cash &amp; UPI settlements
+      </div>
+    </div>
+
+    <!-- This Week's Collections -->
+    <div class="card" style="padding: 1.25rem; border-left: 4px solid var(--brand-accent);">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
+        📊 This Week's Collections
+      </div>
+      <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: var(--brand-accent);">
+        ₹{{ '{:,.2f}'.format(week_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Last 7 calendar days
+      </div>
+    </div>
+
+    <!-- This Month's Collections -->
+    <div class="card" style="padding: 1.25rem; border-left: 4px solid #059669;">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
+        📈 This Month's Collections
+      </div>
+      <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #059669;">
+        ₹{{ '{:,.2f}'.format(month_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Current calendar month
+      </div>
+    </div>
+
+    <!-- Cumulative Total Revenue -->
+    <div class="card" style="padding: 1.25rem; border-left: 4px solid var(--brand-gold);">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
+        💎 Cumulative All-Time Revenue
+      </div>
+      <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: var(--brand-gold);">
+        ₹{{ '{:,.2f}'.format(total_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Across {{ total_txns }} total transactions
+      </div>
+    </div>
+
+    <!-- Reconciliation Audit Status -->
+    <div class="card" style="padding: 1.25rem; border-left: 4px solid #6366F1;">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.25rem;">
+        ⚖️ Bank Reconciliation
+      </div>
+      <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #4338CA;">
+        {{ reconciled_txns }} / {{ total_txns }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        {% if unreconciled_txns == 0 %}
+          <span style="color: #059669; font-weight: 700;">✓ 100% Reconciled</span>
+        {% else %}
+          <span style="color: #D97706; font-weight: 700;">{{ unreconciled_txns }} pending reconciliation</span>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Search & Filter Controls Card -->
+  <div class="card" style="padding: 1.25rem; margin-bottom: 1.75rem;">
+    <form method="GET" action="{{ url_for('admin_finances') }}" style="display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: flex-end;">
+      
+      <!-- Time Period -->
+      <div style="flex: 1; min-width: 140px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+          Period
+        </label>
+        <select name="period" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;" onchange="this.form.submit()">
+          <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+          <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+          <option value="this_week" {% if period == 'this_week' %}selected{% endif %}>This Week (7 Days)</option>
+          <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+          <option value="last_month" {% if period == 'last_month' %}selected{% endif %}>Last Month</option>
+          <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Date Range</option>
+        </select>
+      </div>
+
+      <!-- Payment Method -->
+      <div style="flex: 1; min-width: 150px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+          Payment Method
+        </label>
+        <select name="method" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;" onchange="this.form.submit()">
+          <option value="all" {% if method_filter == 'all' %}selected{% endif %}>All Methods</option>
+          <option value="UPI Intent" {% if method_filter == 'UPI Intent' %}selected{% endif %}>UPI Intent (GPay/PhonePe)</option>
+          <option value="Cash / Counter" {% if method_filter == 'Cash / Counter' %}selected{% endif %}>Cash / Counter Collection</option>
+          <option value="POS Card / EDC" {% if method_filter == 'POS Card / EDC' %}selected{% endif %}>POS Card / EDC</option>
+          <option value="Bank Transfer / NEFT" {% if method_filter == 'Bank Transfer / NEFT' %}selected{% endif %}>Bank Transfer / NEFT</option>
+          <option value="Mock Gateway" {% if method_filter == 'Mock Gateway' %}selected{% endif %}>Mock Gateway</option>
+        </select>
+      </div>
+
+      <!-- Reconciliation Status -->
+      <div style="flex: 1; min-width: 140px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+          Reconciliation
+        </label>
+        <select name="reconciled" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;" onchange="this.form.submit()">
+          <option value="all" {% if reconciled_filter == 'all' %}selected{% endif %}>All Records</option>
+          <option value="1" {% if reconciled_filter == '1' %}selected{% endif %}>Reconciled Only</option>
+          <option value="0" {% if reconciled_filter == '0' %}selected{% endif %}>Unreconciled Only</option>
+        </select>
+      </div>
+
+      <!-- Search Query -->
+      <div style="flex: 2; min-width: 220px;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+          Search Member, Invoice or Txn ID
+        </label>
+        <input type="text" name="q" value="{{ q }}" placeholder="e.g. Ramesh, TRIC-INV-2026-0001, 9894..." class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;">
+      </div>
+
+      <!-- Date Range (Only visible if period == custom) -->
+      {% if period == 'custom' %}
+      <div style="display: flex; gap: 0.5rem; flex: 2; min-width: 240px;">
+        <div style="flex: 1;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">From</label>
+          <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;">
+        </div>
+        <div style="flex: 1;">
+          <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">To</label>
+          <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="font-size: 0.85rem; padding: 0.45rem 0.6rem;">
+        </div>
+      </div>
+      {% endif %}
+
+      <div>
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight: 700; padding: 0.5rem 1rem;">
+          Filter Ledger
+        </button>
+        {% if period != 'all' or method_filter != 'all' or reconciled_filter != 'all' or q %}
+          <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="font-weight: 700; padding: 0.5rem 0.75rem; margin-left: 0.25rem;">
+            Reset
+          </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Tabbed Layout: 1. Revenue Ledger & Invoices | 2. Tamper-Evident Audit Trail -->
+  <div style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border-hairline); margin-bottom: 1.5rem;">
+    <button type="button" id="tabLedgerBtn" class="admin-tab-btn active" onclick="switchFinTab('ledger')" style="padding: 0.6rem 1.25rem; font-weight: 700; font-size: 0.9rem; border: none; background: none; cursor: pointer; border-bottom: 3px solid var(--brand-primary); color: var(--brand-primary);">
+      📑 Revenue Collections Ledger ({{ payments|length }})
+    </button>
+    <button type="button" id="tabAuditBtn" class="admin-tab-btn" onclick="switchFinTab('audit')" style="padding: 0.6rem 1.25rem; font-weight: 700; font-size: 0.9rem; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-muted);">
+      🛡️ Tamper-Evident Financial Audit Trail ({{ audit_trail|length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: REVENUE COLLECTIONS LEDGER -->
+  <div id="tabLedgerContent" class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 class="card-title" style="margin: 0;">Revenue Transactions &amp; Invoices</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          Filtered Collections Total: <strong class="font-mono" style="color: var(--brand-primary); font-size: 0.95rem;">₹{{ '{:,.2f}'.format(filtered_rev) }}</strong> across {{ payments|length }} transactions
+        </span>
+      </div>
+      <div>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">
+          Official SAC: <strong>9996</strong> · Sporting &amp; Recreation
+        </span>
+      </div>
+    </div>
+
+    {% if payments %}
+    <div class="table-container">
+      <table class="data-table" id="financesLedgerTable">
+        <thead>
+          <tr>
+            <th>Invoice / Receipt</th>
+            <th>Date &amp; Time</th>
+            <th>Member Details</th>
+            <th>Pass / Plan</th>
+            <th style="text-align: right;">Amount</th>
+            <th>Payment Method &amp; Ref</th>
+            <th style="text-align: center;">Dispatch</th>
+            <th style="text-align: center;">Reconciled</th>
+            <th style="text-align: right;">Receipt Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <!-- Invoice No -->
+            <td>
+              <a href="{{ url_for('payment_receipt', transaction_id=p.transaction_id) }}" class="font-mono" style="font-weight: 800; color: var(--brand-primary); font-size: 0.85rem;" title="View &amp; Print Official Tax Invoice">
+                {{ p.invoice_no or ('TRIC-INV-' ~ p.id) }}
+              </a>
+              <div class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);" title="Internal Transaction ID">
+                {{ p.transaction_id }}
+              </div>
+            </td>
+
+            <!-- Date -->
+            <td class="font-mono" style="font-size: 0.8rem; white-space: nowrap;">
+              {{ p.payment_date[:16] if p.payment_date else '--' }}
+            </td>
+
+            <!-- Member -->
+            <td>
+              <div style="font-weight: 700; color: var(--text-main);">{{ p.user_name }}</div>
+              <div class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">
+                📞 {{ p.phone }}
+                {% if p.id_card_number %}
+                  · <span style="color: var(--brand-primary);">{{ p.id_card_number }}</span>
+                {% elif p.app_no %}
+                  · {{ p.app_no }}
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Plan -->
+            <td>
+              <span style="font-weight: 600;">{{ p.plan_name or 'Membership Pass' }}</span>
+              {% if p.start_date and p.end_date %}
+                <div class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                  {{ p.start_date }} to {{ p.end_date }}
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- Amount -->
+            <td class="font-mono" style="text-align: right; font-weight: 800; font-size: 0.95rem; color: var(--brand-primary);">
+              ₹{{ '{:,.2f}'.format(p.amount) }}
+            </td>
+
+            <!-- Method & Ref -->
+            <td>
+              <div style="font-size: 0.8rem; font-weight: 600;">
+                {{ p.payment_method }}
+              </div>
+              {% if p.upi_ref_id %}
+                <div class="font-mono" style="font-size: 0.7rem; color: var(--text-muted);" title="UPI RRN or Reference Number">
+                  Ref: {{ p.upi_ref_id }}
+                </div>
+              {% endif %}
+            </td>
+
+            <!-- Dispatch Status -->
+            <td style="text-align: center;">
+              <div style="display: flex; flex-direction: column; gap: 3px; align-items: center;">
+                {% if p.receipt_sent_whatsapp %}
+                  <span class="status-badge status-active" style="font-size: 0.65rem; padding: 2px 6px;" title="Dispatched via WhatsApp">
+                    ✓ WhatsApp
+                  </span>
+                {% else %}
+                  <span class="status-badge" style="background:#F1F5F9; color:#64748B; font-size: 0.65rem; padding: 2px 6px;" title="WhatsApp not dispatched yet">
+                    WA Pending
+                  </span>
+                {% endif %}
+                {% if p.receipt_sent_email %}
+                  <span class="status-badge status-active" style="font-size: 0.65rem; padding: 2px 6px;" title="Dispatched via Email">
+                    ✓ Email
+                  </span>
+                {% else %}
+                  <span class="status-badge" style="background:#F1F5F9; color:#64748B; font-size: 0.65rem; padding: 2px 6px;" title="Email not dispatched yet">
+                    Email Pending
+                  </span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Reconciliation -->
+            <td style="text-align: center;">
+              {% if p.reconciled %}
+                <span class="status-badge status-active" style="font-size: 0.72rem; padding: 2px 8px;" title="Verified by {{ p.reconciled_by_name or 'Super Admin' }} on {{ p.reconciled_at or p.payment_date }}">
+                  ✓ Reconciled
+                </span>
+                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">
+                  {{ p.reconciled_at[:10] if p.reconciled_at else '' }}
+                </div>
+              {% else %}
+                <form action="{{ url_for('admin_reconcile_payment', payment_id=p.id) }}" method="POST" style="margin: 0;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 2px 7px; color: var(--brand-primary); font-weight: 700; border-color: var(--brand-primary);" title="Mark as reconciled against bank statement">
+                    ⚡ Reconcile
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.35rem; align-items: center; justify-content: flex-end;">
+                <!-- 1-Click WhatsApp Instant Digital Receipt -->
+                <a href="{{ receipt_whatsapp_url(p) }}" target="_blank" rel="noopener noreferrer" 
+                   class="btn btn-sm" 
+                   style="font-size: 0.75rem; padding: 3px 8px; background: #25D366; color: #FFFFFF; border: 1px solid #16A34A; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 4px;"
+                   title="Send Instant Official Receipt to {{ p.user_name }} via WhatsApp">
+                  💬 WA Receipt
+                </a>
+
+                <!-- View Receipt / Invoice -->
+                <a href="{{ url_for('payment_receipt', transaction_id=p.transaction_id) }}" 
+                   class="btn btn-secondary btn-sm" 
+                   style="font-size: 0.75rem; padding: 3px 8px; font-weight: 700;"
+                   title="View Official Digital Receipt &amp; Tax Invoice">
+                  🧾 View
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">💳</div>
+      <h4 style="margin: 0; color: var(--text-main);">No Financial Records Match Criteria</h4>
+      <p style="font-size: 0.85rem; margin-top: 0.25rem;">Try clearing your filters or search terms.</p>
+      <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;">Reset Filters</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2: TAMPER-EVIDENT FINANCIAL AUDIT TRAIL -->
+  <div id="tabAuditContent" class="card" style="display: none;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 class="card-title" style="margin: 0;">Clean Financial Audit Trail</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          Immutable, chronological event journal of all revenue collections, invoice generations, and account reconciliations.
+        </span>
+      </div>
+      <div>
+        <span class="status-badge status-active" style="font-size: 0.75rem;">🛡️ Tamper-Evident Ledger</span>
+      </div>
+    </div>
+
+    {% if audit_trail %}
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action Type</th>
+            <th>Invoice / Ref</th>
+            <th style="text-align: right;">Amount</th>
+            <th>Logged Actor</th>
+            <th>Audit Journal Narrative &amp; Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in audit_trail %}
+          <tr>
+            <!-- Timestamp -->
+            <td class="font-mono" style="font-size: 0.8rem; white-space: nowrap;">
+              {{ a.created_at }}
+            </td>
+
+            <!-- Action Badge -->
+            <td>
+              {% if a.action == 'INVOICE_GENERATED' %}
+                <span class="status-badge" style="background: #E0F2FE; color: #0369A1; font-weight: 700;">📄 INVOICE GENERATED</span>
+              {% elif a.action == 'PAYMENT_RECEIVED' %}
+                <span class="status-badge status-active" style="font-weight: 700;">💰 PAYMENT RECEIVED</span>
+              {% elif a.action == 'OFFLINE_PAYMENT_RECORDED' %}
+                <span class="status-badge" style="background: #FEF3C7; color: #92400E; font-weight: 700;">💵 COUNTER COLLECTION</span>
+              {% elif a.action == 'RECONCILED' %}
+                <span class="status-badge" style="background: #DCFCE7; color: #15803D; font-weight: 700;">⚖️ RECONCILED</span>
+              {% elif a.action == 'RECEIPT_DISPATCHED_WHATSAPP' %}
+                <span class="status-badge" style="background: #D1FAE5; color: #065F46; font-weight: 700;">💬 WHATSAPP DISPATCH</span>
+              {% elif a.action == 'RECEIPT_DISPATCHED_EMAIL' %}
+                <span class="status-badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 700;">📧 EMAIL DISPATCH</span>
+              {% else %}
+                <span class="status-badge" style="font-weight: 700;">{{ a.action }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Invoice / Ref -->
+            <td class="font-mono" style="font-weight: 700; font-size: 0.825rem;">
+              {{ a.invoice_no or '--' }}
+            </td>
+
+            <!-- Amount -->
+            <td class="font-mono" style="text-align: right; font-weight: 700;">
+              {% if a.amount %}
+                ₹{{ '{:,.2f}'.format(a.amount) }}
+              {% else %}
+                --
+              {% endif %}
+            </td>
+
+            <!-- Performed By -->
+            <td style="font-size: 0.825rem; font-weight: 600;">
+              {{ a.performed_by_name or 'System' }}
+            </td>
+
+            <!-- Details Narrative -->
+            <td style="font-size: 0.825rem; color: var(--text-main);">
+              {{ a.details }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+      No audit records logged yet.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- MODAL: RECORD COUNTER / OFFLINE COLLECTION -->
+<div id="recordCollectionModal" class="rules-modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalRecordTitle">
+  <div class="card" style="max-width: 580px; width: 92%; margin: 2rem auto; max-height: 90vh; overflow-y: auto; padding: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.25);">
+    
+    <!-- Modal Header -->
+    <div style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%); color: #FFFFFF; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 id="modalRecordTitle" style="font-size: 1.15rem; font-weight: 800; color: #FFFFFF; margin: 0;">
+          ➕ Record Counter Collection &amp; Issue Receipt
+        </h3>
+        <span style="font-size: 0.75rem; opacity: 0.85;">Generate digital invoice and dispatch receipt instantly via WhatsApp</span>
+      </div>
+      <button type="button" onclick="closeRecordModal()" style="background: none; border: none; color: #FFFFFF; font-size: 1.5rem; cursor: pointer; line-height: 1;" aria-label="Close modal">&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form action="{{ url_for('admin_record_collection') }}" method="POST" style="padding: 1.5rem;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Member Selector -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="memberSelect" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Select Member *
+        </label>
+        <select name="user_id" id="memberSelect" class="form-control" required style="font-size: 0.9rem;">
+          <option value="">-- Choose Approved Member --</option>
+          {% for m in members %}
+            <option value="{{ m.id }}">{{ m.name }} (📞 {{ m.phone }}{% if m.app_no %} · {{ m.app_no }}{% endif %})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Plan Selector -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="planSelect" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Membership Plan / Pass *
+        </label>
+        <select name="plan_id" id="planSelect" class="form-control" required style="font-size: 0.9rem;" onchange="updatePlanFee(this)">
+          <option value="">-- Choose Membership Plan --</option>
+          {% for pl in plans %}
+            <option value="{{ pl.id }}" data-fee="{{ pl.fee_amount }}">{{ pl.name }} ({{ pl.duration_days }} Days · ₹{{ '{:,.0f}'.format(pl.fee_amount) }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Amount -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="amountInput" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Amount Collected (INR) *
+        </label>
+        <div style="position: relative;">
+          <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">₹</span>
+          <input type="number" step="0.01" name="amount" id="amountInput" class="form-control" required placeholder="6000.00" style="padding-left: 2rem; font-size: 1rem; font-weight: 700; font-family: monospace;">
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="paymentMethodSelect" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Collection Method *
+        </label>
+        <select name="payment_method" id="paymentMethodSelect" class="form-control" style="font-size: 0.9rem;">
+          <option value="Cash / Counter">Cash / Counter Walk-in</option>
+          <option value="POS Card / EDC">POS Card / Debit / Credit</option>
+          <option value="Direct UPI Scan">Direct QR / Counter UPI Scan</option>
+          <option value="Bank Transfer / NEFT">Bank Transfer / NEFT</option>
+        </select>
+      </div>
+
+      <!-- Reference No -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="refInput" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Reference / Counter Receipt No (Optional)
+        </label>
+        <input type="text" name="reference_no" id="refInput" placeholder="e.g. CASH-REC-1049, POS-AUTH-983" class="form-control" style="font-size: 0.85rem;">
+      </div>
+
+      <!-- Internal Notes -->
+      <div style="margin-bottom: 1.25rem;">
+        <label for="notesInput" style="display: block; font-size: 0.825rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          Notes / Remarks (Optional)
+        </label>
+        <input type="text" name="notes" id="notesInput" placeholder="e.g. Paid in full at reception counter" class="form-control" style="font-size: 0.85rem;">
+      </div>
+
+      <!-- Mark as Reconciled Checkbox -->
+      <div style="margin-bottom: 1.5rem; background: #F8FAFC; padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-hairline);">
+        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin: 0;">
+          <input type="checkbox" name="reconcile_now" value="1" checked style="width: 17px; height: 17px;">
+          <span>✓ Mark as Reconciled with Cash Journal immediately</span>
+        </label>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeRecordModal()">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" style="font-weight: 700; padding: 0.6rem 1.5rem;">
+          Issue Invoice &amp; Record Payment
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+function switchFinTab(tab) {
+  const ledgerBtn = document.getElementById('tabLedgerBtn');
+  const auditBtn = document.getElementById('tabAuditBtn');
+  const ledgerContent = document.getElementById('tabLedgerContent');
+  const auditContent = document.getElementById('tabAuditContent');
+
+  if (tab === 'ledger') {
+    ledgerBtn.style.borderBottom = '3px solid var(--brand-primary)';
+    ledgerBtn.style.color = 'var(--brand-primary)';
+    auditBtn.style.borderBottom = '3px solid transparent';
+    auditBtn.style.color = 'var(--text-muted)';
+    ledgerContent.style.display = 'block';
+    auditContent.style.display = 'none';
+  } else {
+    auditBtn.style.borderBottom = '3px solid var(--brand-primary)';
+    auditBtn.style.color = 'var(--brand-primary)';
+    ledgerBtn.style.borderBottom = '3px solid transparent';
+    ledgerBtn.style.color = 'var(--text-muted)';
+    auditContent.style.display = 'block';
+    ledgerContent.style.display = 'none';
+  }
+}
+
+function updatePlanFee(selectElem) {
+  const selectedOpt = selectElem.options[selectElem.selectedIndex];
+  const fee = selectedOpt.getAttribute('data-fee');
+  const amountInput = document.getElementById('amountInput');
+  if (fee && amountInput) {
+    amountInput.value = parseFloat(fee).toFixed(2);
+  }
+}
+
+function openRecordModal() {
+  const modal = document.getElementById('recordCollectionModal');
+  if (modal) {
+    modal.style.display = 'block';
+    if (window.ModalFocusTrap) {
+      window.ModalFocusTrap.trap(modal, closeRecordModal);
+    }
+  }
+}
+
+function closeRecordModal() {
+  const modal = document.getElementById('recordCollectionModal');
+  if (modal) {
+    modal.style.display = 'none';
+    if (window.ModalFocusTrap) {
+      window.ModalFocusTrap.release(modal);
+    }
+  }
+}
+</script>
+{% endblock %}

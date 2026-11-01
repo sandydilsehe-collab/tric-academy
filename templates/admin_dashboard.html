@@ -65,12 +65,52 @@
     <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle);">Overview</a>
     <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
     <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
+    <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="font-weight: 700; color: var(--brand-primary); border-color: var(--brand-primary);">💰 Financial Records</a>
     <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
     <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
     <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>
     <a href="{{ url_for('admin_backups') }}" class="btn btn-secondary btn-sm">Backups</a>
     <a href="{{ url_for('export_users_csv') }}" class="btn btn-secondary btn-sm" style="margin-left: auto;">Export Users CSV</a>
     <a href="{{ url_for('export_payments_csv') }}" class="btn btn-secondary btn-sm">Export Payments CSV</a>
+  </div>
+
+  <!-- Financial Records & Revenue Tracking Strip (Daily, Monthly, Cumulative) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="padding: 1.15rem; border-left: 4px solid var(--brand-primary);">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem;">
+        📅 Today's Collections
+      </div>
+      <div class="font-mono" style="font-size: 1.5rem; font-weight: 800; color: var(--brand-primary);">
+        ₹{{ '{:,.2f}'.format(today_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+        <a href="{{ url_for('admin_finances', period='today') }}" style="color: var(--brand-primary); font-weight: 700;">View Today's Ledger →</a>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1.15rem; border-left: 4px solid #059669;">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem;">
+        📈 Month Collections
+      </div>
+      <div class="font-mono" style="font-size: 1.5rem; font-weight: 800; color: #059669;">
+        ₹{{ '{:,.2f}'.format(month_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+        <a href="{{ url_for('admin_finances', period='this_month') }}" style="color: #059669; font-weight: 700;">View Month Ledger →</a>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1.15rem; border-left: 4px solid var(--brand-gold);">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.2rem;">
+        💎 Cumulative All-Time
+      </div>
+      <div class="font-mono" style="font-size: 1.5rem; font-weight: 800; color: var(--brand-gold);">
+        ₹{{ '{:,.2f}'.format(total_rev) }}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+        <a href="{{ url_for('admin_finances') }}" style="color: var(--brand-gold); font-weight: 700;">Audit Trail &amp; Ledger →</a>
+      </div>
+    </div>
   </div>
 
   <div class="admin-dual-grid">

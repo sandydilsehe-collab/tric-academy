@@ -1,86 +1,151 @@
 {% extends "base.html" %}
 
-{% block title %}Payment Receipt – TRIC Academy{% endblock %}
+{% block title %}Tax Invoice &amp; Payment Receipt – TRIC Academy{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 720px; padding-top: 3rem; padding-bottom: 5rem;">
+<div class="container" style="max-width: 760px; padding-top: 2.5rem; padding-bottom: 5rem;">
   
   <!-- Action Bar (Hidden on Print) -->
-  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm">
-      ← Back to Dashboard
-    </a>
-    <button onclick="window.print()" class="btn btn-primary btn-sm">
-      🖨️ Print / Save as PDF
-    </button>
+  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div>
+      {% if current_user and current_user.role == 'admin' %}
+        <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Financial Ledger
+        </a>
+      {% else %}
+        <a href="{{ url_for('member_dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+          ← Back to Dashboard
+        </a>
+      {% endif %}
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+      <!-- Instant 1-Click WhatsApp Dispatch -->
+      <a href="{{ receipt_whatsapp_url(payment) }}" target="_blank" rel="noopener noreferrer" 
+         class="btn btn-sm" 
+         style="background: #25D366; color: #FFFFFF; font-weight: 700; border: 1px solid #16A34A; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: 4px; box-shadow: 0 1px 4px rgba(37,211,102,0.35);"
+         title="Dispatch official invoice directly to member's WhatsApp">
+        💬 Send via WhatsApp
+      </a>
+
+      <!-- Dispatch to Email Form -->
+      <form action="{{ url_for('receipt_send_email', transaction_id=payment.transaction_id) }}" method="POST" style="margin: 0; display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary btn-sm" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem;">
+          📧 Email Receipt
+        </button>
+      </form>
+
+      <!-- Print / PDF -->
+      <button onclick="window.print()" class="btn btn-primary btn-sm" style="font-weight: 700; padding: 0.4rem 0.85rem;">
+        🖨️ Print / Save as PDF
+      </button>
+    </div>
   </div>
 
   <!-- Official Receipt Paper Card -->
-  <div class="card" style="padding: 2.5rem; background: #FFFFFF; border: 2px solid var(--border-hairline); box-shadow: 0 4px 20px rgba(0,0,0,0.06); font-family: 'DM Sans', sans-serif;">
+  <div class="card" style="padding: 2.75rem; background: #FFFFFF; border: 2px solid var(--border-hairline); box-shadow: 0 6px 24px rgba(0,0,0,0.07); font-family: 'DM Sans', sans-serif;">
     
     <!-- Receipt Header -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--brand-primary); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
-      <div style="display: flex; align-items: center; gap: 0.85rem;">
-        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" style="width: 52px; height: 52px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--brand-primary); padding-bottom: 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="TRIC Logo" style="width: 56px; height: 56px;">
         <div>
-          <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.45rem; font-weight: 800; color: var(--brand-primary); margin: 0; line-height: 1.1;">
+          <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--brand-primary); margin: 0; line-height: 1.1;">
             TRIC ACADEMY
           </h2>
           <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">
             SCHOOL OF SWIMMING · TIRUPUR
           </span>
-          <div style="font-size: 0.75rem; color: #64748B; margin-top: 2px;">
+          <div style="font-size: 0.75rem; color: #475569; margin-top: 3px;">
             85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur - 641 652
+          </div>
+          <div style="font-size: 0.7rem; color: #64748B; margin-top: 1px;">
+            SAC Code: <strong>9996</strong> (Sporting &amp; Recreational Services) · Reg: TN-TPR-0994
           </div>
         </div>
       </div>
+      
       <div style="text-align: right;">
-        <span style="background: #DCFCE7; color: var(--success); font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 9999px; text-transform: uppercase;">
+        <span style="background: #DCFCE7; color: var(--success); font-size: 0.75rem; font-weight: 800; padding: 3px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em;">
           ✓ Payment Success
         </span>
-        <div class="font-mono" style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-top: 6px;">
-          {{ payment.transaction_id }}
+        <div style="margin-top: 6px;">
+          <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Official Invoice No:</span>
+          <strong class="font-mono" style="font-size: 1.05rem; color: var(--brand-primary);">
+            {{ payment.invoice_no or ('TRIC-INV-' ~ payment.id) }}
+          </strong>
+        </div>
+        <div class="font-mono" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+          Txn ID: {{ payment.transaction_id }}
         </div>
       </div>
     </div>
 
-    <!-- Receipt Subtitle -->
+    <!-- Receipt Title & Dispatch Status -->
     <div style="text-align: center; margin-bottom: 1.75rem;">
-      <h3 style="font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-main); margin: 0;">
-        Official Membership Fee Receipt / Tax Invoice
+      <h3 style="font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-main); margin: 0; font-weight: 800;">
+        Official Membership Pass Receipt / Tax Invoice
       </h3>
+      <div style="display: flex; justify-content: center; gap: 0.6rem; margin-top: 0.5rem;">
+        {% if payment.receipt_sent_whatsapp %}
+          <span class="status-badge status-active" style="font-size: 0.7rem; padding: 2px 8px;">
+            ✓ WhatsApp Dispatched
+          </span>
+        {% endif %}
+        {% if payment.receipt_sent_email %}
+          <span class="status-badge status-active" style="font-size: 0.7rem; padding: 2px 8px;">
+            ✓ Email Dispatched
+          </span>
+        {% endif %}
+        {% if payment.reconciled %}
+          <span class="status-badge status-active" style="font-size: 0.7rem; padding: 2px 8px;">
+            ✓ Reconciled with Bank
+          </span>
+        {% endif %}
+      </div>
     </div>
 
     <!-- Details Grid -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem; font-size: 0.875rem;">
       <div>
-        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
           Billed To Member
         </span>
-        <strong style="font-size: 1.05rem; color: var(--text-main); display: block;">{{ payment.user_name }}</strong>
-        <div style="color: var(--text-muted); margin-top: 2px;">App No: <span class="font-mono">{{ payment.app_no }}</span></div>
-        <div style="color: var(--text-muted);">Phone: <span class="font-mono">{{ payment.phone }}</span></div>
+        <strong style="font-size: 1.1rem; color: var(--text-main); display: block;">{{ payment.user_name }}</strong>
+        <div style="color: var(--text-muted); margin-top: 3px;">Contact: <strong class="font-mono" style="color: var(--text-main);">{{ payment.phone }}</strong></div>
         <div style="color: var(--text-muted);">Email: {{ payment.email }}</div>
         {% if payment.id_card_number %}
-          <div style="color: var(--text-muted);">ID Card: <strong class="font-mono">{{ payment.id_card_number }}</strong></div>
+          <div style="color: var(--text-muted); margin-top: 2px;">
+            Official Pass ID: <strong class="font-mono" style="color: var(--brand-primary);">{{ payment.id_card_number }}</strong>
+          </div>
+        {% elif payment.app_no %}
+          <div style="color: var(--text-muted); margin-top: 2px;">
+            Application No: <span class="font-mono">{{ payment.app_no }}</span>
+          </div>
         {% endif %}
       </div>
 
       <div style="text-align: right;">
-        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 2px;">
-          Transaction Details
+        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;">
+          Financial Transaction Details
         </span>
         <div>Date &amp; Time: <strong class="font-mono">{{ payment.payment_date }}</strong></div>
-        <div>Order ID: <strong class="font-mono">{{ payment.order_id or '--' }}</strong></div>
+        <div>Order Ref: <strong class="font-mono">{{ payment.order_id or '--' }}</strong></div>
         {% if payment.upi_ref_id %}
-          <div>UPI Ref / RRN: <strong class="font-mono">{{ payment.upi_ref_id }}</strong></div>
+          <div>UPI Ref / RRN: <strong class="font-mono" style="color: var(--brand-primary);">{{ payment.upi_ref_id }}</strong></div>
         {% elif payment.razorpay_payment_id %}
           <div>Payment Ref: <strong class="font-mono">{{ payment.razorpay_payment_id }}</strong></div>
         {% endif %}
         {% if payment.upi_vpa %}
           <div>Payee VPA: <strong class="font-mono">{{ payment.upi_vpa }}</strong></div>
         {% endif %}
-        <div>Method: <strong>{{ payment.payment_method }}</strong></div>
+        <div>Payment Mode: <strong>{{ payment.payment_method }}</strong></div>
+        {% if payment.reconciled_by_name %}
+          <div style="font-size: 0.75rem; color: #059669; margin-top: 2px;">
+            Reconciled by: {{ payment.reconciled_by_name }}
+          </div>
+        {% endif %}
       </div>
     </div>
 
@@ -89,21 +154,23 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Description</th>
+            <th>Description &amp; Service</th>
             <th>Duration</th>
-            <th>Validity Period</th>
+            <th>Validity Term</th>
             <th style="text-align: right;">Amount (INR)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
-              <strong>{{ payment.plan_name }} Pass</strong>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">TRIC Academy Pool Access &amp; Coaching</div>
+              <strong>{{ payment.plan_name or 'Membership Pass' }}</strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                TRIC Academy Pool Access, Coaching &amp; Locker Facility
+              </div>
             </td>
-            <td>{{ payment.duration_days }} Days</td>
+            <td>{{ payment.duration_days or 30 }} Days</td>
             <td class="font-mono" style="font-size: 0.85rem;">
-              {{ payment.start_date }} to {{ payment.end_date }}
+              {{ payment.start_date or '--' }} to {{ payment.end_date or '--' }}
             </td>
             <td class="font-mono" style="text-align: right; font-weight: 800; font-size: 1.05rem;">
               ₹{{ '{:,.2f}'.format(payment.amount) }}
@@ -112,8 +179,8 @@
         </tbody>
         <tfoot>
           <tr style="background: #F8FAFC; font-weight: 800;">
-            <td colspan="3" style="text-align: right; padding: 0.85rem 1rem;">Total Paid:</td>
-            <td class="font-mono" style="text-align: right; font-size: 1.25rem; color: var(--brand-primary); padding: 0.85rem 1rem;">
+            <td colspan="3" style="text-align: right; padding: 0.85rem 1rem;">Total Amount Paid:</td>
+            <td class="font-mono" style="text-align: right; font-size: 1.3rem; color: var(--brand-primary); padding: 0.85rem 1rem;">
               ₹{{ '{:,.2f}'.format(payment.amount) }}
             </td>
           </tr>
@@ -121,15 +188,37 @@
       </table>
     </div>
 
-    <!-- Footer Seal & Terms -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed var(--border-hairline); padding-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted);">
-      <div style="max-width: 420px; line-height: 1.5;">
-        * This is an electronically generated receipt stored in the TRIC Academy database. All payments are subject to the 32 General Rules &amp; Regulations.
+    <!-- Verification QR Code, Terms & Seal -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed var(--border-hairline); padding-top: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      
+      <!-- Digital Verification QR -->
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
+        <img src="{{ url_for('api_receipt_qr_code', transaction_id=payment.transaction_id) }}" 
+             alt="Invoice Verification QR" 
+             style="width: 84px; height: 84px; border: 1.5px solid #CBD5E1; border-radius: 6px; padding: 4px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div>
+          <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-main);">
+            Scan to Verify Authenticity
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); max-width: 200px; line-height: 1.4; margin-top: 2px;">
+            Instant digital verification against TRIC Academy financial ledger.
+          </div>
+        </div>
       </div>
-      <div style="text-align: right;">
-        <div style="font-weight: 700; color: var(--text-main); margin-bottom: 2px;">TRIC ACADEMY</div>
-        <div>Authorized Cashier / Section I/C</div>
+
+      <!-- Legal Disclaimer & Sign-off -->
+      <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted);">
+        <div style="max-width: 320px; line-height: 1.4; margin-bottom: 0.75rem; font-size: 0.7rem;">
+          * Electronically generated official receipt. Stored in TRIC Academy database. All memberships are governed by the 32 General Rules &amp; Regulations.
+        </div>
+        <div style="font-weight: 800; color: var(--brand-primary); font-size: 0.85rem;">
+          TRIC ACADEMY OF SWIMMING
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-main); font-weight: 600;">
+          Authorized Cashier &amp; Section I/C
+        </div>
       </div>
+
     </div>
 
   </div>

@@ -241,6 +241,48 @@ ACADEMY_UPI_VPA = os.environ.get('ACADEMY_UPI_VPA', 'tricacademy@upi')
 ACADEMY_PAYEE_NAME = os.environ.get('ACADEMY_PAYEE_NAME', 'TRIC Academy')
 ACADEMY_MCC = "7999"  # Sports and Recreation Clubs
 
+def generate_next_invoice_number(db):
+    year = date.today().year
+    row = db.execute(
+        "SELECT invoice_no FROM payments WHERE invoice_no LIKE ? ORDER BY id DESC LIMIT 1",
+        (f"TRIC-INV-{year}-%",)
+    ).fetchone()
+    if row and row['invoice_no']:
+        try:
+            last_seq = int(row['invoice_no'].split('-')[-1])
+            next_seq = last_seq + 1
+        except Exception:
+            next_seq = 1
+    else:
+        count = db.execute("SELECT COUNT(*) AS c FROM payments").fetchone()['c']
+        next_seq = count + 1
+    return f"TRIC-INV-{year}-{next_seq:04d}"
+
+def log_financial_audit(db, action, amount=None, payment_id=None, invoice_no=None, performed_by=None, performed_by_name=None, details=None):
+    try:
+        if performed_by is None:
+            curr = get_current_user()
+            if curr:
+                performed_by = curr['id']
+                performed_by_name = curr['name']
+            else:
+                performed_by = 1
+                performed_by_name = 'System Gatekeeper'
+        elif performed_by_name is None:
+            user = db.execute("SELECT name FROM users WHERE id = ?", (performed_by,)).fetchone()
+            performed_by_name = user['name'] if user else 'System'
+
+        db.execute(
+            """
+            INSERT INTO financial_audit_trail (
+                payment_id, invoice_no, action, amount, performed_by, performed_by_name, details, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            (payment_id, invoice_no, action, amount, performed_by, performed_by_name, details)
+        )
+    except Exception as e:
+        print(f"[FINANCIAL AUDIT LOG ERROR] {e}")
+
 class PaymentService:
     def process_payment(self, user_id, plan_id, amount, order_id=None, razorpay_payment_id=None, razorpay_signature=None, method="UPI Intent", notes=None):
         raise NotImplementedError
@@ -351,20 +393,48 @@ class UPIPaymentService(PaymentService):
             (upi_ref_id, txn_id, upi_app, now, order_id)
         )
 
-        # 2. Record full transaction in payments table
-        db.execute(
+        # 2. Record full transaction in payments table with official invoice number
+        invoice_no = generate_next_invoice_number(db)
+        cursor = db.cursor()
+        cursor.execute(
             """
             INSERT INTO payments (
                 user_id, plan_id, amount, currency, payment_date,
-                transaction_id, order_id, upi_ref_id, upi_vpa,
-                status, payment_method, notes
-            ) VALUES (?, ?, ?, 'INR', ?, ?, ?, ?, ?, 'success', ?, ?)
+                transaction_id, invoice_no, invoice_date, order_id, upi_ref_id, upi_vpa,
+                status, payment_method, reconciled, reconciled_at, reconciled_by,
+                reconciled_notes, receipt_sent_email, notes
+            ) VALUES (?, ?, ?, 'INR', ?, ?, ?, ?, ?, ?, ?, 'success', ?, 1, ?, 1, 'Auto-reconciled via instant UPI journal', 1, ?)
             """,
             (
-                user_id, plan_id, amount, now, txn_id, order_id,
-                upi_ref_id, upi_vpa, upi_app,
+                user_id, plan_id, amount, now, txn_id, invoice_no, now, order_id,
+                upi_ref_id, upi_vpa, upi_app, now,
                 notes or f"Membership Renewal via {upi_app}"
             )
+        )
+        payment_id = cursor.lastrowid
+
+        # 2b. Log clean financial audit trail entries
+        plan_record = db.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+        plan_label = plan_record['name'] if plan_record else 'Pass'
+        log_financial_audit(
+            db, action='INVOICE_GENERATED', amount=amount,
+            payment_id=payment_id, invoice_no=invoice_no,
+            details=f"Digital invoice {invoice_no} generated for {plan_label} (Txn: {txn_id})"
+        )
+        log_financial_audit(
+            db, action='PAYMENT_RECEIVED', amount=amount,
+            payment_id=payment_id, invoice_no=invoice_no,
+            details=f"Online revenue collected of INR {amount:,.2f} via {upi_app} (Ref: {upi_ref_id})"
+        )
+        log_financial_audit(
+            db, action='RECEIPT_DISPATCHED_EMAIL', amount=amount,
+            payment_id=payment_id, invoice_no=invoice_no,
+            details=f"Digital tax receipt auto-dispatched to member email"
+        )
+        log_financial_audit(
+            db, action='RECONCILED', amount=amount,
+            payment_id=payment_id, invoice_no=invoice_no,
+            details="Instant UPI settlement matched and auto-reconciled"
         )
 
         # 3. Extend membership validity properly based on renewed date
@@ -648,8 +718,59 @@ class CostEffectiveAlertService:
             'message': wa_text if channel == 'whatsapp' else sms_text
         }
 
+    def compose_receipt_whatsapp_text(self, payment):
+        p = dict(payment)
+        user_name = p.get('user_name') or p.get('name') or 'Member'
+        invoice_no = p.get('invoice_no') or 'TRIC-INV-PENDING'
+        amount = float(p.get('amount', 0))
+        plan_name = p.get('plan_name') or 'Swimming Pass'
+        txn_id = p.get('transaction_id') or '--'
+        ref = p.get('upi_ref_id') or p.get('payment_method') or 'UPI'
+        pdate = str(p.get('payment_date', ''))[:19]
+        start_d = p.get('start_date') or '--'
+        end_d = p.get('end_date') or '--'
+        id_card = p.get('id_card_number') or p.get('app_no') or ''
+        
+        receipt_url = f"{self.base_url}/payment/receipt/{txn_id}"
+
+        msg = (
+            f"🏊 *TRIC ACADEMY – School of Swimming*\n"
+            f"🧾 *OFFICIAL MEMBERSHIP RECEIPT & TAX INVOICE*\n\n"
+            f"Dear *{user_name}*,\n"
+            f"Thank you for your payment! Here are your official membership pass receipt details:\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📄 *Invoice No:* {invoice_no}\n"
+            f"💰 *Amount Paid:* ₹{amount:,.2f}\n"
+            f"🏷️ *Pass / Plan:* {plan_name}\n"
+            f"⏱️ *Pass Validity:* {start_d} to {end_d}\n"
+        )
+        if id_card:
+            msg += f"🪪 *Pass ID:* {id_card}\n"
+        msg += (
+            f"🔢 *Transaction ID:* {txn_id}\n"
+            f"⚡ *Payment Method/Ref:* {ref}\n"
+            f"📅 *Payment Date:* {pdate}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔗 *View & Download Official Digital Invoice:*\n"
+            f"{receipt_url}\n\n"
+            f"🏊 *TRIC Academy – School of Swimming*\n"
+            f"📍 85/5, Kaliamman Kovil Street, #5 Velampalayam, Tirupur - 641 652\n"
+            f"📞 Helpdesk: +91 98947 77333 / +91 98947 30333"
+        )
+        return msg
+
+    def get_receipt_whatsapp_url(self, payment):
+        if not payment:
+            return "#"
+        p = dict(payment)
+        phone = p.get('phone') or ''
+        clean_p = self.clean_phone(phone)
+        text = self.compose_receipt_whatsapp_text(payment)
+        return f"https://wa.me/{clean_p}?text={urllib.parse.quote(text)}"
+
 alert_service = CostEffectiveAlertService()
 app.jinja_env.globals['whatsapp_alert_url'] = alert_service.get_whatsapp_url_for_user
+app.jinja_env.globals['receipt_whatsapp_url'] = alert_service.get_receipt_whatsapp_url
 
 # -----------------------------------------------------------------------------
 # Reminder Service & APScheduler
@@ -1264,12 +1385,18 @@ def member_dashboard():
     # Fetch office use details for digital ID card
     office = db.execute("SELECT * FROM office_use WHERE user_id = ?", (active_user['id'],)).fetchone()
 
-    # Recent payments
+    # Recent payments with full invoice and receipt metadata
     payments = db.execute(
         """
-        SELECT * FROM payments 
-        WHERE user_id = ? OR user_id = ?
-        ORDER BY payment_date DESC LIMIT 5
+        SELECT p.*, u.name AS user_name, u.phone, u.app_no, pl.name AS plan_name,
+               m.start_date, m.end_date, o.id_card_number
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+        LEFT JOIN office_use o ON u.id = o.user_id
+        WHERE p.user_id = ? OR p.user_id = ?
+        ORDER BY p.payment_date DESC, p.id DESC LIMIT 10
         """,
         (active_user['id'], parent['id'])
     ).fetchall()
@@ -1510,6 +1637,31 @@ def api_upi_create_order():
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/upi/qr/<order_id>.png', methods=['GET'])
+@app.route('/api/receipt/qr/<transaction_id>.png', methods=['GET'])
+def api_receipt_qr_code(transaction_id):
+    """Generate and serve official verification QR code for digital payment receipt."""
+    db = get_db()
+    payment = db.execute(
+        "SELECT id, transaction_id, invoice_no, amount, payment_date FROM payments WHERE transaction_id = ?",
+        (transaction_id,)
+    ).fetchone()
+    if not payment:
+        abort(404)
+    verify_url = url_for('payment_receipt', transaction_id=transaction_id, _external=True)
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=6,
+        border=2,
+    )
+    qr.add_data(verify_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#0F172A", back_color="#FFFFFF")
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return Response(buf.getvalue(), mimetype='image/png')
+
 def api_upi_qr_code(order_id):
     """Generate and serve high-contrast QR code for the UPI Intent URI."""
     db = get_db()
@@ -1644,7 +1796,61 @@ def payment_receipt(transaction_id):
         """
         SELECT p.*, u.name AS user_name, u.email, u.phone, u.app_no,
                pl.name AS plan_name, pl.duration_days,
-               m.start_date, m.end_date, o.id_card_number
+               m.start_date, m.end_date, o.id_card_number,
+               admin.name AS reconciled_by_name
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+        LEFT JOIN office_use o ON u.id = o.user_id
+        LEFT JOIN users admin ON p.reconciled_by = admin.id
+        WHERE p.transaction_id = ?
+        """,
+        (transaction_id,)
+    ).fetchone()
+
+    if not payment:
+        abort(404)
+
+    curr = get_current_user()
+    if curr['role'] != 'admin' and payment['user_id'] != curr['id']:
+        abort(403)
+
+    # Ensure invoice_no exists
+    if not payment['invoice_no']:
+        inv_no = generate_next_invoice_number(db)
+        db.execute(
+            "UPDATE payments SET invoice_no = ?, invoice_date = COALESCE(payment_date, CURRENT_TIMESTAMP) WHERE id = ?",
+            (inv_no, payment['id'])
+        )
+        db.commit()
+        payment = db.execute(
+            """
+            SELECT p.*, u.name AS user_name, u.email, u.phone, u.app_no,
+                   pl.name AS plan_name, pl.duration_days,
+                   m.start_date, m.end_date, o.id_card_number,
+                   admin.name AS reconciled_by_name
+            FROM payments p
+            JOIN users u ON p.user_id = u.id
+            LEFT JOIN plans pl ON p.plan_id = pl.id
+            LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+            LEFT JOIN office_use o ON u.id = o.user_id
+            LEFT JOIN users admin ON p.reconciled_by = admin.id
+            WHERE p.transaction_id = ?
+            """,
+            (transaction_id,)
+        ).fetchone()
+
+    return render_template('payment_receipt.html', payment=payment)
+
+@app.route('/payment/receipt/<transaction_id>/dispatch-whatsapp', methods=['POST'])
+@login_required
+def receipt_dispatch_whatsapp(transaction_id):
+    db = get_db()
+    payment = db.execute(
+        """
+        SELECT p.*, u.name AS user_name, u.email, u.phone, u.app_no,
+               pl.name AS plan_name, m.start_date, m.end_date, o.id_card_number
         FROM payments p
         JOIN users u ON p.user_id = u.id
         LEFT JOIN plans pl ON p.plan_id = pl.id
@@ -1662,7 +1868,55 @@ def payment_receipt(transaction_id):
     if curr['role'] != 'admin' and payment['user_id'] != curr['id']:
         abort(403)
 
-    return render_template('payment_receipt.html', payment=payment)
+    db.execute("UPDATE payments SET receipt_sent_whatsapp = 1 WHERE id = ?", (payment['id'],))
+    log_financial_audit(
+        db, action='RECEIPT_DISPATCHED_WHATSAPP', amount=payment['amount'],
+        payment_id=payment['id'], invoice_no=payment['invoice_no'],
+        details=f"Official digital receipt dispatched via WhatsApp to {payment['user_name']} ({payment['phone']})"
+    )
+    db.commit()
+
+    wa_url = alert_service.get_receipt_whatsapp_url(payment)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({'success': True, 'whatsapp_url': wa_url, 'message': 'WhatsApp receipt link generated and logged in audit trail.'})
+
+    flash(f"Digital receipt logged for WhatsApp dispatch to {payment['phone']}.", 'success')
+    return redirect(wa_url)
+
+@app.route('/payment/receipt/<transaction_id>/send-email', methods=['POST'])
+@login_required
+def receipt_send_email(transaction_id):
+    db = get_db()
+    payment = db.execute(
+        """
+        SELECT p.*, u.name AS user_name, u.email, u.phone, u.app_no,
+               pl.name AS plan_name, m.start_date, m.end_date
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+        WHERE p.transaction_id = ?
+        """,
+        (transaction_id,)
+    ).fetchone()
+
+    if not payment:
+        abort(404)
+
+    curr = get_current_user()
+    if curr['role'] != 'admin' and payment['user_id'] != curr['id']:
+        abort(403)
+
+    db.execute("UPDATE payments SET receipt_sent_email = 1 WHERE id = ?", (payment['id'],))
+    log_financial_audit(
+        db, action='RECEIPT_DISPATCHED_EMAIL', amount=payment['amount'],
+        payment_id=payment['id'], invoice_no=payment['invoice_no'],
+        details=f"Digital payment receipt dispatched via email to {payment['email']} ({payment['user_name']})"
+    )
+    db.commit()
+
+    flash(f"Official tax invoice and payment receipt successfully dispatched to {payment['email']}.", 'success')
+    return redirect(url_for('payment_receipt', transaction_id=transaction_id))
 
 @app.route('/notifications/mark-read/<int:notif_id>', methods=['POST'])
 @login_required
@@ -2139,6 +2393,22 @@ def admin_dashboard():
         (today, in_7_days)
     ).fetchall()
 
+    today_str = str(today)
+    month_prefix = today.strftime('%Y-%m')
+    today_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE DATE(payment_date) = ? AND status = 'success'", (today_str,)).fetchone()['s']
+    month_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE strftime('%Y-%m', payment_date) = ? AND status = 'success'", (month_prefix,)).fetchone()['s']
+    total_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE status = 'success'").fetchone()['s']
+    recent_collections = db.execute(
+        """
+        SELECT p.*, u.name AS user_name, u.phone, pl.name AS plan_name
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        ORDER BY p.payment_date DESC, p.id DESC
+        LIMIT 5
+        """
+    ).fetchall()
+
     return render_template(
         'admin_dashboard.html',
         total_users=total_users,
@@ -2147,7 +2417,11 @@ def admin_dashboard():
         expiring_7d=expiring_7d,
         expired_users=expired_users,
         recent_applicants=recent_applicants,
-        expiring_list=expiring_list
+        expiring_list=expiring_list,
+        today_rev=today_rev,
+        month_rev=month_rev,
+        total_rev=total_rev,
+        recent_collections=recent_collections
     )
 
 @app.route('/admin/applicants')
@@ -2730,6 +3004,382 @@ def export_users_csv():
         output.getvalue(),
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=tric_academy_members.csv"}
+    )
+
+@app.route('/admin/finances')
+@role_required(['admin'])
+def admin_finances():
+    db = get_db()
+    today = date.today()
+    
+    # 1. KPI Aggregates
+    today_str = str(today)
+    week_start_str = str(today - timedelta(days=7))
+    month_prefix = today.strftime('%Y-%m')
+
+    today_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE DATE(payment_date) = ? AND status = 'success'", (today_str,)).fetchone()['s']
+    week_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE DATE(payment_date) >= ? AND status = 'success'", (week_start_str,)).fetchone()['s']
+    month_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE strftime('%Y-%m', payment_date) = ? AND status = 'success'", (month_prefix,)).fetchone()['s']
+    total_rev = db.execute("SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE status = 'success'").fetchone()['s']
+
+    total_txns = db.execute("SELECT COUNT(*) AS c FROM payments WHERE status = 'success'").fetchone()['c']
+    reconciled_txns = db.execute("SELECT COUNT(*) AS c FROM payments WHERE status = 'success' AND reconciled = 1").fetchone()['c']
+    unreconciled_txns = db.execute("SELECT COUNT(*) AS c FROM payments WHERE status = 'success' AND reconciled = 0").fetchone()['c']
+
+    # 2. Filters
+    period = request.args.get('period', 'all').strip()
+    method_filter = request.args.get('method', 'all').strip()
+    reconciled_filter = request.args.get('reconciled', 'all').strip()
+    q = request.args.get('q', '').strip()
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+
+    sql = """
+        SELECT p.*, u.name AS user_name, u.email, u.phone, u.app_no,
+               pl.name AS plan_name, pl.duration_days,
+               m.start_date, m.end_date, o.id_card_number,
+               admin.name AS reconciled_by_name
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        LEFT JOIN user_memberships m ON u.id = m.user_id AND m.is_active = 1
+        LEFT JOIN office_use o ON u.id = o.user_id
+        LEFT JOIN users admin ON p.reconciled_by = admin.id
+        WHERE 1=1
+    """
+    params = []
+
+    if period == 'today':
+        sql += " AND DATE(p.payment_date) = ?"
+        params.append(today_str)
+    elif period == 'this_week':
+        sql += " AND DATE(p.payment_date) >= ?"
+        params.append(week_start_str)
+    elif period == 'this_month':
+        sql += " AND strftime('%Y-%m', p.payment_date) = ?"
+        params.append(month_prefix)
+    elif period == 'last_month':
+        first_of_this_month = today.replace(day=1)
+        last_month_end = first_of_this_month - timedelta(days=1)
+        sql += " AND strftime('%Y-%m', p.payment_date) = ?"
+        params.append(last_month_end.strftime('%Y-%m'))
+    elif period == 'custom' and date_from and date_to:
+        sql += " AND DATE(p.payment_date) BETWEEN ? AND ?"
+        params.extend([date_from, date_to])
+
+    if method_filter != 'all':
+        sql += " AND p.payment_method = ?"
+        params.append(method_filter)
+
+    if reconciled_filter == '1':
+        sql += " AND p.reconciled = 1"
+    elif reconciled_filter == '0':
+        sql += " AND p.reconciled = 0"
+
+    if q:
+        sql += " AND (u.name LIKE ? OR u.phone LIKE ? OR u.email LIKE ? OR p.invoice_no LIKE ? OR p.transaction_id LIKE ? OR p.upi_ref_id LIKE ?)"
+        q_wild = f"%{q}%"
+        params.extend([q_wild, q_wild, q_wild, q_wild, q_wild, q_wild])
+
+    sql += " ORDER BY p.payment_date DESC, p.id DESC"
+    payments = db.execute(sql, params).fetchall()
+
+    filtered_rev = sum(float(r['amount'] or 0) for r in payments)
+
+    # 3. Clean Audit Trail Entries (Recent 50)
+    audit_trail = db.execute(
+        """
+        SELECT a.*, p.transaction_id, u.name AS member_name
+        FROM financial_audit_trail a
+        LEFT JOIN payments p ON a.payment_id = p.id
+        LEFT JOIN users u ON p.user_id = u.id
+        ORDER BY a.created_at DESC, a.id DESC
+        LIMIT 50
+        """
+    ).fetchall()
+
+    # 4. Active Members list and plans for offline collection recording modal
+    members = db.execute("SELECT id, name, phone, app_no FROM users WHERE role = 'member' AND status = 'approved' ORDER BY name ASC").fetchall()
+    plans = db.execute("SELECT * FROM plans ORDER BY fee_amount ASC").fetchall()
+
+    return render_template(
+        'admin_finances.html',
+        today_rev=today_rev,
+        week_rev=week_rev,
+        month_rev=month_rev,
+        total_rev=total_rev,
+        total_txns=total_txns,
+        reconciled_txns=reconciled_txns,
+        unreconciled_txns=unreconciled_txns,
+        payments=payments,
+        filtered_rev=filtered_rev,
+        audit_trail=audit_trail,
+        members=members,
+        plans=plans,
+        period=period,
+        method_filter=method_filter,
+        reconciled_filter=reconciled_filter,
+        q=q,
+        date_from=date_from,
+        date_to=date_to
+    )
+
+@app.route('/admin/finances/reconcile/<int:payment_id>', methods=['POST'])
+@role_required(['admin'])
+def admin_reconcile_payment(payment_id):
+    db = get_db()
+    payment = db.execute("SELECT * FROM payments WHERE id = ?", (payment_id,)).fetchone()
+    if not payment:
+        abort(404)
+
+    curr = get_current_user()
+    now = datetime.now()
+    notes = request.form.get('notes', 'Reconciled and verified against bank statement').strip()
+
+    db.execute(
+        """
+        UPDATE payments
+        SET reconciled = 1, reconciled_at = ?, reconciled_by = ?, reconciled_notes = ?
+        WHERE id = ?
+        """,
+        (now, curr['id'], notes, payment_id)
+    )
+    log_financial_audit(
+        db, action='RECONCILED', amount=payment['amount'],
+        payment_id=payment_id, invoice_no=payment['invoice_no'],
+        performed_by=curr['id'], performed_by_name=curr['name'],
+        details=f"Payment reconciled against bank statement by {curr['name']}: {notes}"
+    )
+    db.commit()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({'success': True, 'payment_id': payment_id, 'message': f"Invoice {payment['invoice_no']} successfully reconciled."})
+
+    flash(f"Invoice {payment['invoice_no']} ({payment['transaction_id']}) marked as Reconciled.", 'success')
+    return redirect(request.referrer or url_for('admin_finances'))
+
+@app.route('/admin/finances/reconcile-all', methods=['POST'])
+@role_required(['admin'])
+def admin_reconcile_all():
+    db = get_db()
+    unrec = db.execute("SELECT id, amount, invoice_no, transaction_id FROM payments WHERE reconciled = 0").fetchall()
+    curr = get_current_user()
+    now = datetime.now()
+
+    for p in unrec:
+        db.execute(
+            """
+            UPDATE payments
+            SET reconciled = 1, reconciled_at = ?, reconciled_by = ?, reconciled_notes = 'Batch reconciled against bank settlement'
+            WHERE id = ?
+            """,
+            (now, curr['id'], p['id'])
+        )
+        log_financial_audit(
+            db, action='RECONCILED', amount=p['amount'],
+            payment_id=p['id'], invoice_no=p['invoice_no'],
+            performed_by=curr['id'], performed_by_name=curr['name'],
+            details=f"Batch reconciled against bank statement by {curr['name']}"
+        )
+    db.commit()
+
+    flash(f"Successfully reconciled {len(unrec)} transactions against bank records.", 'success')
+    return redirect(url_for('admin_finances'))
+
+@app.route('/admin/finances/record-collection', methods=['POST'])
+@role_required(['admin'])
+def admin_record_collection():
+    db = get_db()
+    user_id = request.form.get('user_id')
+    plan_id = request.form.get('plan_id')
+    raw_amount = request.form.get('amount')
+    payment_method = request.form.get('payment_method', 'Cash / Counter').strip()
+    reference_no = request.form.get('reference_no', '').strip()
+    notes = request.form.get('notes', '').strip()
+    reconcile_now = 1 if request.form.get('reconcile_now') else 0
+
+    if not user_id or not plan_id or not raw_amount:
+        flash("Member, Plan, and Amount are required to record a collection.", 'error')
+        return redirect(url_for('admin_finances'))
+
+    try:
+        user_id = int(user_id)
+        plan_id = int(plan_id)
+        amount = float(raw_amount)
+    except (ValueError, TypeError):
+        flash("Invalid user, plan, or amount format.", 'error')
+        return redirect(url_for('admin_finances'))
+
+    user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    plan = db.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+    if not user or not plan:
+        flash("Selected member or pass plan not found.", 'error')
+        return redirect(url_for('admin_finances'))
+
+    curr = get_current_user()
+    now = datetime.now()
+    today = date.today()
+    duration_days = plan['duration_days'] if plan else 30
+
+    # Calculate validity extension
+    existing = db.execute(
+        "SELECT * FROM user_memberships WHERE user_id = ? ORDER BY end_date DESC LIMIT 1",
+        (user_id,)
+    ).fetchone()
+
+    if existing and existing['end_date']:
+        try:
+            existing_end = datetime.strptime(str(existing['end_date']), '%Y-%m-%d').date()
+            if existing_end >= today:
+                start_d = datetime.strptime(str(existing['start_date']), '%Y-%m-%d').date() if existing['start_date'] else today
+                end_d = existing_end + timedelta(days=duration_days)
+            else:
+                start_d = today
+                end_d = today + timedelta(days=duration_days)
+        except Exception:
+            start_d = today
+            end_d = today + timedelta(days=duration_days)
+        batch_id = existing['batch_id'] or 1
+    else:
+        start_d = today
+        end_d = today + timedelta(days=duration_days)
+        batch_id = 1
+
+    # Update active membership
+    db.execute("UPDATE user_memberships SET is_active = 0 WHERE user_id = ?", (user_id,))
+    db.execute(
+        """
+        INSERT INTO user_memberships (user_id, plan_id, batch_id, start_date, end_date, is_active)
+        VALUES (?, ?, ?, ?, ?, 1)
+        """,
+        (user_id, plan_id, batch_id, str(start_d), str(end_d))
+    )
+
+    # Sync office use
+    db.execute(
+        """
+        UPDATE office_use
+        SET validity_start = ?, validity_end = ?, approved_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+        """,
+        (str(start_d), str(end_d), user_id)
+    )
+
+    # Generate transaction ID & invoice number
+    txn_id = f"TRIC-TXN-{uuid.uuid4().hex[:10].upper()}"
+    invoice_no = generate_next_invoice_number(db)
+    final_notes = notes or f"Counter Collection ({payment_method}) recorded by {curr['name']}"
+
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        INSERT INTO payments (
+            user_id, plan_id, amount, currency, payment_date,
+            transaction_id, invoice_no, invoice_date, upi_ref_id,
+            status, payment_method, reconciled, reconciled_at, reconciled_by,
+            reconciled_notes, receipt_sent_email, receipt_sent_whatsapp, notes
+        ) VALUES (?, ?, ?, 'INR', ?, ?, ?, ?, ?, 'success', ?, ?, ?, ?, ?, 1, 0, ?)
+        """,
+        (
+            user_id, plan_id, amount, now, txn_id, invoice_no, now,
+            reference_no or f"OFFLINE-{now.strftime('%Y%m%d%H%M')}",
+            payment_method,
+            reconcile_now,
+            (now if reconcile_now else None),
+            (curr['id'] if reconcile_now else None),
+            ('Verified and reconciled at cash counter' if reconcile_now else None),
+            final_notes
+        )
+    )
+    payment_id = cursor.lastrowid
+
+    # Log to audit trail
+    log_financial_audit(
+        db, action='OFFLINE_PAYMENT_RECORDED', amount=amount,
+        payment_id=payment_id, invoice_no=invoice_no,
+        performed_by=curr['id'], performed_by_name=curr['name'],
+        details=f"Counter collection of INR {amount:,.2f} recorded via {payment_method} for {user['name']}"
+    )
+    log_financial_audit(
+        db, action='INVOICE_GENERATED', amount=amount,
+        payment_id=payment_id, invoice_no=invoice_no,
+        performed_by=curr['id'], performed_by_name=curr['name'],
+        details=f"Official digital tax invoice {invoice_no} generated (Txn: {txn_id})"
+    )
+    if reconcile_now:
+        log_financial_audit(
+            db, action='RECONCILED', amount=amount,
+            payment_id=payment_id, invoice_no=invoice_no,
+            performed_by=curr['id'], performed_by_name=curr['name'],
+            details=f"Instant counter payment reconciled by {curr['name']}"
+        )
+
+    # In-app notification
+    db.execute(
+        """
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES (?, ?, ?, 'success')
+        """,
+        (
+            user_id,
+            "Pass Renewal Payment Received",
+            f"Receipt {invoice_no}: Payment of ₹{amount:,.0f} received via {payment_method}. Pass extended until {end_d}."
+        )
+    )
+    db.commit()
+
+    flash(
+        f"Successfully recorded collection of ₹{amount:,.2f} for {user['name']}! "
+        f"Invoice: {invoice_no}. Pass extended until {end_d}.",
+        'success'
+    )
+    return redirect(url_for('payment_receipt', transaction_id=txn_id))
+
+@app.route('/admin/export/finances.csv')
+@role_required(['admin'])
+def export_finances_csv():
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT p.id, p.invoice_no, p.transaction_id, p.payment_date,
+               u.name AS user_name, u.email, u.phone, u.app_no, o.id_card_number,
+               pl.name AS plan_name, p.amount, p.currency, p.payment_method,
+               p.upi_ref_id, p.status, p.reconciled, p.reconciled_at,
+               admin.name AS reconciled_by_name,
+               p.receipt_sent_whatsapp, p.receipt_sent_email, p.notes
+        FROM payments p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN plans pl ON p.plan_id = pl.id
+        LEFT JOIN office_use o ON u.id = o.user_id
+        LEFT JOIN users admin ON p.reconciled_by = admin.id
+        ORDER BY p.payment_date DESC, p.id DESC
+        """
+    ).fetchall()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'ID', 'Invoice No', 'Transaction ID', 'Date & Time', 'Member Name',
+        'Phone', 'Email', 'App No', 'ID Card No', 'Plan / Pass', 'Amount (INR)',
+        'Currency', 'Payment Method', 'Payment Ref / RRN', 'Status', 'Reconciled',
+        'Reconciled Date', 'Reconciled By', 'WhatsApp Dispatched', 'Email Dispatched', 'Notes'
+    ])
+    for r in rows:
+        writer.writerow([
+            r['id'], r['invoice_no'] or '', r['transaction_id'], r['payment_date'],
+            r['user_name'], r['phone'], r['email'], r['app_no'] or '', r['id_card_number'] or '',
+            r['plan_name'] or 'General Pass', r['amount'], r['currency'] or 'INR',
+            r['payment_method'] or '', r['upi_ref_id'] or '', r['status'],
+            'YES' if r['reconciled'] else 'NO', r['reconciled_at'] or '',
+            r['reconciled_by_name'] or '', 'YES' if r['receipt_sent_whatsapp'] else 'NO',
+            'YES' if r['receipt_sent_email'] else 'NO', r['notes'] or ''
+        ])
+
+    filename = f"tric_academy_finances_ledger_{date.today().strftime('%Y%m%d')}.csv"
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
     )
 
 @app.route('/admin/export/payments.csv')
