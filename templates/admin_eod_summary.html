@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}End-of-Day (EOD) Executive Summary – TRIC Academy{% endblock %}
+
+{% block content %}
+<!-- Page Hero Banner -->
+<div class="page-hero-banner" style="background: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-accent) 100%); color: #FFFFFF; padding: 2.25rem 0; margin-bottom: 2rem;">
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; margin-bottom: 0.25rem;">
+          Director Operations &amp; Financial Close
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 800; margin: 0; line-height: 1.2;">
+          📲 End-of-Day (EOD) Executive Briefing
+        </h1>
+        <p style="margin: 0.35rem 0 0; opacity: 0.9; font-size: 0.9rem;">
+          Automated 21:00 IST daily operational close, revenue breakdown, and attendance report for Director Shiva.
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <!-- 1-Click Direct WhatsApp to Director -->
+        <a href="{{ eod_data.whatsapp_url }}" target="_blank" rel="noopener noreferrer" 
+           class="btn btn-sm" 
+           style="background: #25D366; color: #FFFFFF; font-weight: 700; border: 1px solid #16A34A; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 1rem; border-radius: 4px; box-shadow: 0 2px 6px rgba(37,211,102,0.35);">
+          💬 Send via WhatsApp
+        </a>
+
+        <!-- Form Dispatch via API -->
+        <form action="{{ url_for('admin_eod_dispatch') }}" method="POST" style="margin: 0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="date" value="{{ eod_data.report_date }}">
+          <button type="submit" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #FFFFFF; font-weight: 700; padding: 0.45rem 0.9rem;">
+            ⚡ Trigger API Dispatch
+          </button>
+        </form>
+
+        <button onclick="window.print()" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #FFFFFF; font-weight: 700; padding: 0.45rem 0.9rem;">
+          🖨️ Print Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom: 5rem;">
+
+  <!-- Admin Navigation Strip -->
+  <div style="display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-hairline); padding-bottom: 0.75rem; overflow-x: auto;">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">Overview</a>
+    <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
+    <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm">💰 Financial Records</a>
+    <a href="{{ url_for('admin_eod_summary') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle); color: var(--brand-primary); font-weight: 700; border-color: var(--brand-primary);">📲 EOD Briefing</a>
+    <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
+    <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
+    <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>
+    <a href="{{ url_for('admin_backups') }}" class="btn btn-secondary btn-sm">Backups</a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2rem; align-items: flex-start;">
+    
+    <!-- LEFT: Phone Screen WhatsApp Live Preview Card -->
+    <div>
+      <div class="card" style="padding: 0; overflow: hidden; border: 2px solid #CBD5E1; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); background: #EFEAE2;">
+        
+        <!-- WhatsApp Chat Header -->
+        <div style="background: #075E54; color: #FFFFFF; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; color: #FFFFFF;">
+              🏊
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem; line-height: 1.2;">
+                TRIC Academy · Director Shiva
+              </div>
+              <div style="font-size: 0.75rem; opacity: 0.85;">
+                Automated Dispatch Channel · Online
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 9999px;">
+            21:00 IST Cron
+          </div>
+        </div>
+
+        <!-- WhatsApp Chat Body with Message Bubble -->
+        <div style="padding: 1.5rem; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png') repeat; background-size: 400px; min-height: 480px;">
+          
+          <div style="background: #FFFFFF; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; max-width: 95%; margin: 0 auto;">
+            
+            <!-- Message Header -->
+            <div style="border-bottom: 1.5px solid #E2E8F0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+              <div style="font-weight: 800; color: var(--brand-primary); font-size: 1rem;">
+                🏊‍♂️ TRIC ACADEMY – END-OF-DAY (EOD) EXECUTIVE BRIEFING
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                📅 <strong>{{ eod_data.formatted_date }}</strong> · 21:00 IST
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">
+                👤 Director: <strong>{{ eod_data.director_name }}</strong> ({{ eod_data.director_phone }})
+              </div>
+            </div>
+
+            <!-- Financial Collections -->
+            <div style="margin-bottom: 1rem; background: #F8FAFC; padding: 0.85rem; border-radius: 8px; border-left: 3.5px solid var(--brand-primary);">
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.35rem;">
+                💰 TODAY'S FINANCIAL REVENUE
+              </div>
+              <div style="font-size: 0.825rem; line-height: 1.5; color: var(--text-main);">
+                • <strong>Total Collections:</strong> <span class="font-mono" style="font-weight: 800; color: var(--brand-primary); font-size: 1rem;">₹{{ '{:,.2f}'.format(eod_data.today_revenue) }}</span> ({{ eod_data.today_txns }} transactions)<br>
+                {% if eod_data.methods %}
+                  {% for m in eod_data.methods %}
+                    &nbsp;&nbsp;▫️ {{ m.payment_method }}: ₹{{ '{:,.2f}'.format(m.sum_amount) }} ({{ m.count }} txn)<br>
+                  {% endfor %}
+                {% else %}
+                  &nbsp;&nbsp;▫️ No revenue collections recorded today<br>
+                {% endif %}
+                • <strong>Bank Reconciliation:</strong> 
+                {% if eod_data.unreconciled_today == 0 %}
+                  <span style="color: #059669; font-weight: 700;">✓ 100% Reconciled with Bank Journal</span>
+                {% else %}
+                  <span style="color: #D97706; font-weight: 700;">⚠️ {{ eod_data.unreconciled_today }} pending reconciliation</span>
+                {% endif %}<br>
+                • <strong>Month-to-Date Revenue:</strong> <span class="font-mono" style="font-weight: 700;">₹{{ '{:,.2f}'.format(eod_data.month_revenue) }}</span>
+              </div>
+            </div>
+
+            <!-- Attendance & Pool Deck -->
+            <div style="margin-bottom: 1rem; background: #F8FAFC; padding: 0.85rem; border-radius: 8px; border-left: 3.5px solid var(--brand-accent);">
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.35rem;">
+                🏊 POOL DECK &amp; ATTENDANCE
+              </div>
+              <div style="font-size: 0.825rem; line-height: 1.5; color: var(--text-main);">
+                • <strong>Total Swimmers Present:</strong> <span class="font-mono" style="font-weight: 800;">{{ eod_data.total_attendance }} checked in</span><br>
+                {% for b in eod_data.batch_attendance %}
+                  &nbsp;&nbsp;▫️ {{ b.name }}: <strong>{{ b.present_count }}</strong> swimmers<br>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Membership & Admissions -->
+            <div style="margin-bottom: 1rem; background: #F8FAFC; padding: 0.85rem; border-radius: 8px; border-left: 3.5px solid #059669;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.35rem;">
+                📋 MEMBERSHIP &amp; ADMISSIONS
+              </div>
+              <div style="font-size: 0.825rem; line-height: 1.5; color: var(--text-main);">
+                • <strong>Passes Approved Today:</strong> {{ eod_data.approved_today }} members<br>
+                • <strong>Pending Applications:</strong> {{ eod_data.pending_applications }} awaiting review<br>
+                • <strong>Passes Expiring Tomorrow:</strong> <span style="color: #DC2626; font-weight: 700;">{{ eod_data.expiring_tomorrow }} swimmers</span> (Alerts queued)<br>
+                • <strong>Expiring in Next 3 Days:</strong> {{ eod_data.expiring_3days }} swimmers
+              </div>
+            </div>
+
+            <!-- System & Facility Integrity -->
+            <div style="background: #F8FAFC; padding: 0.85rem; border-radius: 8px; border-left: 3.5px solid #6366F1;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.35rem;">
+                🛡️ SYSTEM &amp; INTEGRITY
+              </div>
+              <div style="font-size: 0.825rem; line-height: 1.5; color: var(--text-main);">
+                • <strong>Financial Audit Events:</strong> {{ eod_data.audit_events_today }} logged in audit journal<br>
+                • <strong>Database Backup:</strong> <span style="color: #059669; font-weight: 700;">✓ {{ eod_data.latest_backup }}</span>
+              </div>
+            </div>
+
+            <!-- Footer Timestamp -->
+            <div style="text-align: right; margin-top: 0.75rem; font-size: 0.7rem; color: #64748B;">
+              21:00 · Sent <span style="color: #34B7F1; font-weight: 800;">✓✓</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Dispatch Controls & Historical Reports Archive -->
+    <div>
+      
+      <!-- Dispatch Controls Card -->
+      <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+        <h3 class="card-title" style="margin-top: 0; margin-bottom: 0.75rem;">
+          📲 WhatsApp Direct Dispatch
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 1rem;">
+          The EOD briefing runs automatically at <strong>21:00 IST</strong> every evening via APScheduler. You can also trigger an instant dispatch on-demand anytime.
+        </p>
+
+        <form action="{{ url_for('admin_eod_dispatch') }}" method="POST" style="margin-bottom: 1.25rem;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="date" value="{{ eod_data.report_date }}">
+
+          <div style="margin-bottom: 0.85rem;">
+            <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem;">
+              Recipient Director Mobile
+            </label>
+            <input type="text" name="phone" value="{{ eod_data.director_phone }}" class="form-control" style="font-size: 0.9rem; font-weight: 700; font-family: monospace;">
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ eod_data.whatsapp_url }}" target="_blank" rel="noopener noreferrer" 
+               class="btn btn-sm" 
+               style="flex: 1; text-align: center; justify-content: center; background: #25D366; color: #FFFFFF; font-weight: 700; border: 1px solid #16A34A; padding: 0.5rem; border-radius: 4px;">
+              💬 Open in WhatsApp
+            </a>
+            <button type="submit" class="btn btn-primary btn-sm" style="flex: 1; font-weight: 700; padding: 0.5rem;">
+              ⚡ Dispatch Now
+            </button>
+          </div>
+        </form>
+
+        <div style="background: #F8FAFC; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-hairline); font-size: 0.75rem; color: var(--text-muted);">
+          <strong>ℹ️ Zero Extra Cost:</strong> Uses WhatsApp direct messaging link (₹0.00 cost) with fallback to Meta Cloud API if token is configured.
+        </div>
+      </div>
+
+      <!-- Past Archived Reports Card -->
+      <div class="card" style="padding: 1.5rem;">
+        <h3 class="card-title" style="margin-top: 0; margin-bottom: 0.75rem;">
+          📁 Historical EOD Reports Archive
+        </h3>
+        
+        {% if past_reports %}
+        <div class="table-container" style="max-height: 340px; overflow-y: auto;">
+          <table class="data-table" style="font-size: 0.8rem;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th style="text-align: right;">Revenue</th>
+                <th>Swimmers</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in past_reports %}
+              <tr>
+                <td class="font-mono" style="font-weight: 700;">
+                  {{ r.report_date }}
+                </td>
+                <td class="font-mono" style="text-align: right; font-weight: 800; color: var(--brand-primary);">
+                  ₹{{ '{:,.2f}'.format(r.total_revenue) }}
+                </td>
+                <td style="text-align: center;">
+                  {{ r.attendance_count }}
+                </td>
+                <td style="text-align: right;">
+                  <a href="{{ url_for('admin_eod_summary', date=r.report_date) }}" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 2px 7px;">
+                    View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-align: center; padding: 1.5rem 0;">
+          Today's report will be archived at 21:00 IST or upon first dispatch.
+        </p>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

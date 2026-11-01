@@ -239,3 +239,21 @@ CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date, batch_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_primary_email ON users(email) WHERE parent_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_primary_phone ON users(phone) WHERE parent_id IS NULL;
 CREATE INDEX IF NOT EXISTS idx_users_parent_id ON users(parent_id);
+
+-- Automated End-of-Day (EOD) Director Reports Archive
+CREATE TABLE IF NOT EXISTS eod_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_date DATE UNIQUE NOT NULL,
+    total_revenue REAL DEFAULT 0.0,
+    transaction_count INTEGER DEFAULT 0,
+    attendance_count INTEGER DEFAULT 0,
+    pending_applications INTEGER DEFAULT 0,
+    approved_today INTEGER DEFAULT 0,
+    expiring_tomorrow INTEGER DEFAULT 0,
+    summary_text TEXT NOT NULL,
+    sent_to_phone TEXT,
+    sent_to_name TEXT,
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'sent'
+);
+CREATE INDEX IF NOT EXISTS idx_eod_date ON eod_reports(report_date);

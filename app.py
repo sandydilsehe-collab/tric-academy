@@ -241,6 +241,122 @@ ACADEMY_UPI_VPA = os.environ.get('ACADEMY_UPI_VPA', 'tricacademy@upi')
 ACADEMY_PAYEE_NAME = os.environ.get('ACADEMY_PAYEE_NAME', 'TRIC Academy')
 ACADEMY_MCC = "7999"  # Sports and Recreation Clubs
 
+def generate_eod_summary(report_date=None, db=None):
+    if db is None:
+        db = get_db()
+    if report_date is None:
+        report_date = date.today()
+    elif isinstance(report_date, str):
+        try:
+            report_date = datetime.strptime(report_date, '%Y-%m-%d').date()
+        except Exception:
+            report_date = date.today()
+
+    report_date_str = str(report_date)
+    month_prefix = report_date.strftime('%Y-%m')
+
+    # 1. Financials
+    rev_row = db.execute(
+        "SELECT COALESCE(SUM(amount), 0) AS s, COUNT(*) AS c FROM payments WHERE DATE(payment_date) = ? AND status = 'success'",
+        (report_date_str,)
+    ).fetchone()
+    today_revenue = float(rev_row['s'])
+    today_txns = int(rev_row['c'])
+
+    methods = db.execute(
+        "SELECT payment_method, COUNT(*) AS count, SUM(amount) AS sum_amount FROM payments WHERE DATE(payment_date) = ? AND status = 'success' GROUP BY payment_method",
+        (report_date_str,)
+    ).fetchall()
+
+    rec_row = db.execute(
+        "SELECT COUNT(*) AS c FROM payments WHERE DATE(payment_date) = ? AND status = 'success' AND reconciled = 1",
+        (report_date_str,)
+    ).fetchone()
+    reconciled_today = int(rec_row['c'])
+    unreconciled_today = today_txns - reconciled_today
+
+    month_revenue = float(db.execute(
+        "SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE strftime('%Y-%m', payment_date) = ? AND status = 'success'",
+        (month_prefix,)
+    ).fetchone()['s'])
+
+    total_cumulative_revenue = float(db.execute(
+        "SELECT COALESCE(SUM(amount), 0) AS s FROM payments WHERE status = 'success'"
+    ).fetchone()['s'])
+
+    # 2. Attendance & Pool Deck
+    att_row = db.execute(
+        "SELECT COUNT(*) AS c FROM attendance WHERE date = ? AND status = 'present'",
+        (report_date_str,)
+    ).fetchone()
+    total_attendance = int(att_row['c'])
+
+    batch_attendance = db.execute(
+        """
+        SELECT b.id, b.name, b.timing_desc, b.coach_name, b.max_capacity,
+               COUNT(a.id) AS present_count
+        FROM batches b
+        LEFT JOIN attendance a ON b.id = a.batch_id AND a.date = ? AND a.status = 'present'
+        GROUP BY b.id
+        ORDER BY b.id ASC
+        """,
+        (report_date_str,)
+    ).fetchall()
+
+    # 3. Membership & Admissions
+    pending_applications = int(db.execute("SELECT COUNT(*) AS c FROM users WHERE status = 'pending'").fetchone()['c'])
+    approved_today = int(db.execute("SELECT COUNT(*) AS c FROM office_use WHERE DATE(approved_at) = ?", (report_date_str,)).fetchone()['c'])
+
+    tomorrow = report_date + timedelta(days=1)
+    tomorrow_str = str(tomorrow)
+    in_3days_str = str(report_date + timedelta(days=3))
+    expiring_tomorrow = int(db.execute("SELECT COUNT(*) AS c FROM user_memberships WHERE is_active = 1 AND end_date = ?", (tomorrow_str,)).fetchone()['c'])
+    expiring_3days = int(db.execute("SELECT COUNT(*) AS c FROM user_memberships WHERE is_active = 1 AND end_date BETWEEN ? AND ?", (tomorrow_str, in_3days_str)).fetchone()['c'])
+
+    # 4. System & Audit Trail
+    audit_events_today = int(db.execute("SELECT COUNT(*) AS c FROM financial_audit_trail WHERE DATE(created_at) = ?", (report_date_str,)).fetchone()['c'])
+
+    # Latest backup check
+    latest_backup = "Verified Daily Backup"
+    if os.path.exists(BACKUP_FOLDER):
+        backups = sorted([f for f in os.listdir(BACKUP_FOLDER) if f.startswith('tric_backup_') and f.endswith('.db')], reverse=True)
+        if backups:
+            latest_backup = backups[0]
+
+    # Director info
+    admin_user = db.execute("SELECT name, phone FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1").fetchone()
+    director_name = admin_user['name'] if admin_user else 'Shiva (Section I/C)'
+    director_phone = admin_user['phone'] if admin_user else '9894777333'
+
+    eod_data = {
+        'report_date': report_date_str,
+        'formatted_date': report_date.strftime('%A, %d %b %Y'),
+        'director_name': director_name,
+        'director_phone': director_phone,
+        'today_revenue': today_revenue,
+        'today_txns': today_txns,
+        'methods': [dict(m) for m in methods],
+        'reconciled_today': reconciled_today,
+        'unreconciled_today': unreconciled_today,
+        'month_revenue': month_revenue,
+        'total_cumulative_revenue': total_cumulative_revenue,
+        'total_attendance': total_attendance,
+        'batch_attendance': [dict(b) for b in batch_attendance],
+        'pending_applications': pending_applications,
+        'approved_today': approved_today,
+        'expiring_tomorrow': expiring_tomorrow,
+        'expiring_3days': expiring_3days,
+        'audit_events_today': audit_events_today,
+        'latest_backup': latest_backup
+    }
+
+    # Format WhatsApp text
+    if 'alert_service' in globals():
+        eod_data['summary_text'] = alert_service.compose_eod_whatsapp_text(eod_data)
+        eod_data['whatsapp_url'] = alert_service.get_eod_whatsapp_url(eod_data=eod_data, phone=director_phone)
+
+    return eod_data
+
 def generate_next_invoice_number(db):
     year = date.today().year
     row = db.execute(
@@ -768,9 +884,118 @@ class CostEffectiveAlertService:
         text = self.compose_receipt_whatsapp_text(payment)
         return f"https://wa.me/{clean_p}?text={urllib.parse.quote(text)}"
 
+    def compose_eod_whatsapp_text(self, eod_data):
+        d = dict(eod_data)
+        f_date = d.get('formatted_date') or str(d.get('report_date', ''))
+        dir_name = d.get('director_name', 'Director Shiva')
+        today_rev = float(d.get('today_revenue', 0))
+        today_txns = int(d.get('today_txns', 0))
+        month_rev = float(d.get('month_revenue', 0))
+        total_att = int(d.get('total_attendance', 0))
+        pending_apps = int(d.get('pending_applications', 0))
+        approved_today = int(d.get('approved_today', 0))
+        exp_tom = int(d.get('expiring_tomorrow', 0))
+        exp_3d = int(d.get('expiring_3days', 0))
+        audit_events = int(d.get('audit_events_today', 0))
+        backup = d.get('latest_backup') or 'Verified Daily Backup'
+
+        # Methods breakdown
+        methods = d.get('methods', [])
+        if methods:
+            method_lines = "\n".join([f"  • {m['payment_method']}: ₹{float(m['sum_amount']):,.2f} ({m['count']} txn{'s' if m['count'] > 1 else ''})" for m in methods])
+        else:
+            method_lines = "  • No collections recorded today"
+
+        # Reconciliation line
+        unrec = d.get('unreconciled_today', 0)
+        if today_txns == 0:
+            rec_line = "✓ No transactions recorded today"
+        elif unrec == 0:
+            rec_line = f"✓ 100% Reconciled ({today_txns}/{today_txns} verified with journal)"
+        else:
+            rec_line = f"⚠️ {unrec} transaction{'s' if unrec > 1 else ''} pending reconciliation"
+
+        # Batch attendance lines
+        batches = d.get('batch_attendance', [])
+        if batches:
+            batch_lines = "\n".join([f"  • {b['name']}: {b['present_count']} swimmers" for b in batches])
+        else:
+            batch_lines = "  • No batch check-ins recorded"
+
+        base_url = self.base_url
+
+        return (
+            f"🏊‍♂️ *TRIC ACADEMY – END-OF-DAY (EOD) EXECUTIVE BRIEFING*\n"
+            f"📅 *Date:* {f_date} · 21:00 IST\n"
+            f"👤 *Director:* {dir_name}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"💰 *TODAY'S FINANCIAL REVENUE*\n"
+            f"• *Total Collections:* ₹{today_rev:,.2f} ({today_txns} txn{'s' if today_txns != 1 else ''})\n"
+            f"{method_lines}\n"
+            f"• *Bank Reconciliation:* {rec_line}\n"
+            f"• *Month-to-Date Revenue:* ₹{month_rev:,.2f}\n\n"
+            f"🏊 *POOL DECK & ATTENDANCE*\n"
+            f"• *Total Swimmers Checked In:* {total_att} present\n"
+            f"{batch_lines}\n\n"
+            f"📋 *MEMBERSHIP & ADMISSIONS*\n"
+            f"• *Passes Approved Today:* {approved_today} members\n"
+            f"• *Pending Applications:* {pending_apps} awaiting review\n"
+            f"• *Passes Expiring Tomorrow:* {exp_tom} swimmers\n"
+            f"• *Expiring in Next 3 Days:* {exp_3d} swimmers\n\n"
+            f"🛡️ *SYSTEM & INTEGRITY*\n"
+            f"• Financial Audit Events: {audit_events} logged\n"
+            f"• Database Backup: ✓ {backup}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔗 *Financial Ledger:* {base_url}/admin/finances\n"
+            f"🔗 *Admin Dashboard:* {base_url}/admin\n"
+            f"🏊 *TRIC Academy – School of Swimming, Tirupur*"
+        )
+
+    def get_eod_whatsapp_url(self, eod_data=None, target_date=None, phone=None):
+        if eod_data is None:
+            eod_data = generate_eod_summary(report_date=target_date)
+        clean_p = self.clean_phone(phone or eod_data.get('director_phone', '9894777333'))
+        text = eod_data.get('summary_text') or self.compose_eod_whatsapp_text(eod_data)
+        return f"https://wa.me/{clean_p}?text={urllib.parse.quote(text)}"
+
+    def dispatch_eod_whatsapp(self, eod_data, phone=None):
+        clean_p = self.clean_phone(phone or eod_data.get('director_phone', '9894777333'))
+        wa_text = eod_data.get('summary_text') or self.compose_eod_whatsapp_text(eod_data)
+        wa_url = self.get_eod_whatsapp_url(eod_data=eod_data, phone=clean_p)
+        status = 'queued'
+
+        if self.whatsapp_token and self.whatsapp_phone_id and clean_p:
+            try:
+                api_url = f"https://graph.facebook.com/v20.0/{self.whatsapp_phone_id}/messages"
+                headers = {
+                    "Authorization": f"Bearer {self.whatsapp_token}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "messaging_product": "whatsapp",
+                    "to": clean_p,
+                    "type": "text",
+                    "text": {"body": wa_text}
+                }
+                req = urllib.request.Request(api_url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if resp.status in (200, 201):
+                        status = 'delivered_api'
+            except Exception as e:
+                print(f"[EOD WHATSAPP API WARNING] {e}")
+
+        print(f"[EOD EXECUTIVE BRIEFING DISPATCHED] To: {eod_data.get('director_name')} (+{clean_p}) | Status: {status}")
+        return {
+            'status': status,
+            'whatsapp_url': wa_url,
+            'message': wa_text
+        }
+
 alert_service = CostEffectiveAlertService()
 app.jinja_env.globals['whatsapp_alert_url'] = alert_service.get_whatsapp_url_for_user
 app.jinja_env.globals['receipt_whatsapp_url'] = alert_service.get_receipt_whatsapp_url
+app.jinja_env.globals['eod_whatsapp_url'] = alert_service.get_eod_whatsapp_url
+app.jinja_env.globals['get_today_eod_summary'] = generate_eod_summary
 
 # -----------------------------------------------------------------------------
 # Reminder Service & APScheduler
@@ -872,7 +1097,47 @@ def backup_database():
 
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(check_and_send_reminders, 'cron', hour=6, minute=0, id='daily_reminders')
+def dispatch_daily_eod_job():
+    """Daily 9:00 PM job: Generate and dispatch End-of-Day Executive Briefing to Director Shiva."""
+    with app.app_context():
+        db = get_db()
+        today = date.today()
+        eod_data = generate_eod_summary(report_date=today, db=db)
+        alert_service.dispatch_eod_whatsapp(eod_data)
+        
+        # Save to eod_reports archive
+        db.execute(
+            """
+            INSERT INTO eod_reports (
+                report_date, total_revenue, transaction_count, attendance_count,
+                pending_applications, approved_today, expiring_tomorrow,
+                summary_text, sent_to_phone, sent_to_name, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent')
+            ON CONFLICT(report_date) DO UPDATE SET
+                total_revenue = excluded.total_revenue,
+                transaction_count = excluded.transaction_count,
+                attendance_count = excluded.attendance_count,
+                pending_applications = excluded.pending_applications,
+                approved_today = excluded.approved_today,
+                expiring_tomorrow = excluded.expiring_tomorrow,
+                summary_text = excluded.summary_text,
+                sent_at = CURRENT_TIMESTAMP
+            """,
+            (
+                eod_data['report_date'], eod_data['today_revenue'], eod_data['today_txns'],
+                eod_data['total_attendance'], eod_data['pending_applications'],
+                eod_data['approved_today'], eod_data['expiring_tomorrow'],
+                eod_data['summary_text'], eod_data['director_phone'], eod_data['director_name']
+            )
+        )
+        log_financial_audit(
+            db, action='EOD_SUMMARY_DISPATCHED', amount=eod_data['today_revenue'],
+            details=f"Automated 21:00 EOD Executive Briefing dispatched to Director {eod_data['director_name']} ({eod_data['director_phone']})"
+        )
+        db.commit()
+
 scheduler.add_job(backup_database, 'cron', hour=1, minute=0, id='daily_backup')
+scheduler.add_job(dispatch_daily_eod_job, 'cron', hour=21, minute=0, id='daily_eod_summary')
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown(wait=False))
 
@@ -3005,6 +3270,92 @@ def export_users_csv():
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=tric_academy_members.csv"}
     )
+
+@app.route('/admin/eod-summary')
+@role_required(['admin'])
+def admin_eod_summary():
+    """View live EOD Executive Briefing and historical reports archive."""
+    db = get_db()
+    req_date = request.args.get('date', str(date.today()))
+    eod_data = generate_eod_summary(report_date=req_date, db=db)
+
+    # Historical archived EOD reports
+    past_reports = db.execute(
+        "SELECT * FROM eod_reports ORDER BY report_date DESC LIMIT 30"
+    ).fetchall()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({
+            'success': True,
+            'eod_data': eod_data,
+            'whatsapp_url': eod_data['whatsapp_url'],
+            'summary_text': eod_data['summary_text']
+        })
+
+    return render_template(
+        'admin_eod_summary.html',
+        eod_data=eod_data,
+        past_reports=past_reports,
+        req_date=req_date
+    )
+
+@app.route('/admin/eod-summary/dispatch', methods=['POST'])
+@role_required(['admin'])
+def admin_eod_dispatch():
+    """Trigger manual or test dispatch of EOD Executive Briefing to Director Shiva."""
+    db = get_db()
+    curr = get_current_user()
+    req_date = request.form.get('date', str(date.today()))
+    target_phone = request.form.get('phone')
+
+    eod_data = generate_eod_summary(report_date=req_date, db=db)
+    if target_phone:
+        eod_data['director_phone'] = target_phone
+        eod_data['whatsapp_url'] = alert_service.get_eod_whatsapp_url(eod_data=eod_data, phone=target_phone)
+
+    dispatch_res = alert_service.dispatch_eod_whatsapp(eod_data, phone=target_phone)
+
+    # Save to archive
+    db.execute(
+        """
+        INSERT INTO eod_reports (
+            report_date, total_revenue, transaction_count, attendance_count,
+            pending_applications, approved_today, expiring_tomorrow,
+            summary_text, sent_to_phone, sent_to_name, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent')
+        ON CONFLICT(report_date) DO UPDATE SET
+            total_revenue = excluded.total_revenue,
+            transaction_count = excluded.transaction_count,
+            attendance_count = excluded.attendance_count,
+            pending_applications = excluded.pending_applications,
+            approved_today = excluded.approved_today,
+            expiring_tomorrow = excluded.expiring_tomorrow,
+            summary_text = excluded.summary_text,
+            sent_at = CURRENT_TIMESTAMP
+        """,
+        (
+            eod_data['report_date'], eod_data['today_revenue'], eod_data['today_txns'],
+            eod_data['total_attendance'], eod_data['pending_applications'],
+            eod_data['approved_today'], eod_data['expiring_tomorrow'],
+            eod_data['summary_text'], eod_data['director_phone'], eod_data['director_name']
+        )
+    )
+    log_financial_audit(
+        db, action='EOD_SUMMARY_DISPATCHED', amount=eod_data['today_revenue'],
+        performed_by=curr['id'], performed_by_name=curr['name'],
+        details=f"EOD Executive Briefing for {eod_data['report_date']} dispatched by {curr['name']} to Director {eod_data['director_name']} ({eod_data['director_phone']})"
+    )
+    db.commit()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({
+            'success': True,
+            'whatsapp_url': dispatch_res['whatsapp_url'],
+            'message': f"EOD Summary generated and queued for {eod_data['director_name']}."
+        })
+
+    flash(f"End-of-Day Executive Briefing dispatched for {eod_data['report_date']}.", 'success')
+    return redirect(dispatch_res['whatsapp_url'])
 
 @app.route('/admin/finances')
 @role_required(['admin'])

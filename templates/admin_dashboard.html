@@ -17,6 +17,9 @@
         <a href="{{ url_for('admin_user_create') }}" class="btn btn-primary btn-sm" style="box-shadow: 0 4px 12px rgba(31, 138, 138, 0.4); font-weight: 700;">
           + Create User (Entry Pass)
         </a>
+        <a href="{{ url_for('admin_eod_summary') }}" class="btn btn-sm" style="background: #25D366; border-color: #16A34A; color: #FFFFFF; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(37,211,102,0.35);" title="View 21:00 EOD Summary &amp; Send to Director Shiva">
+          📲 EOD Director Briefing
+        </a>
         <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: #FFFFFF; font-weight: 700;">
           Pending Passes (<span id="heroPendingCount">{{ pending_users }}</span>)
         </a>
@@ -65,7 +68,8 @@
     <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle);">Overview</a>
     <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
     <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
-    <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="font-weight: 700; color: var(--brand-primary); border-color: var(--brand-primary);">💰 Financial Records</a>
+    <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm">💰 Financial Records</a>
+    <a href="{{ url_for('admin_eod_summary') }}" class="btn btn-secondary btn-sm" style="font-weight: 700; color: #075E54; border-color: #25D366;">📲 EOD Briefing</a>
     <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
     <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
     <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>

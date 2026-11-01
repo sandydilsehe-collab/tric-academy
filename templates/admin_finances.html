@@ -20,6 +20,9 @@
       </div>
 
       <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_eod_summary') }}" class="btn btn-sm" style="background: #25D366; color: #FFFFFF; font-weight: 700; border: 1px solid #16A34A; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.85rem; border-radius: 4px; box-shadow: 0 2px 6px rgba(37,211,102,0.35);" title="Daily 21:00 EOD Director Executive Briefing">
+          📲 EOD Briefing
+        </a>
         <button type="button" class="btn btn-secondary btn-sm" onclick="openRecordModal()" style="background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #FFFFFF; font-weight: 700;">
           ➕ Record Counter Collection
         </button>
@@ -47,6 +50,7 @@
     <a href="{{ url_for('admin_applicants') }}" class="btn btn-secondary btn-sm">Pending Applicants</a>
     <a href="{{ url_for('admin_users') }}" class="btn btn-secondary btn-sm">All Members Directory</a>
     <a href="{{ url_for('admin_finances') }}" class="btn btn-secondary btn-sm" style="background: var(--surface-subtle); color: var(--brand-primary); font-weight: 700; border-color: var(--brand-primary);">💰 Financial Records</a>
+    <a href="{{ url_for('admin_eod_summary') }}" class="btn btn-secondary btn-sm" style="color: #075E54; font-weight: 700; border-color: #25D366;">📲 EOD Briefing</a>
     <a href="{{ url_for('admin_batches') }}" class="btn btn-secondary btn-sm">Batches &amp; Timings</a>
     <a href="{{ url_for('admin_plans') }}" class="btn btn-secondary btn-sm">Plan Fees</a>
     <a href="{{ url_for('admin_reminders') }}" class="btn btn-secondary btn-sm">Reminder Logs</a>
